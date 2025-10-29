@@ -35,6 +35,7 @@ export interface TreeValue {
 export interface PluginInputParams extends BaseInputParams {
 	children: TreeChildren;
 	view: 'tree';
+	maxHeight?: number;
 }
 
 // NOTE: JSDoc comments of `InputBindingPlugin` can be useful to know details about each property
@@ -90,6 +91,7 @@ export const TreeInputPlugin: InputBindingPlugin<
 			children: p.required.custom<TreeChildren>(() => {
 				return params.children as TreeChildren;
 			}),
+			maxHeight: p.optional.number,
 		}));
 		if (!result) {
 			return null;
@@ -152,6 +154,7 @@ export const TreeInputPlugin: InputBindingPlugin<
 			value: args.value,
 			viewProps: args.viewProps,
 			children: args.params.children,
+			maxHeight: args.params.maxHeight,
 		});
 	},
 });

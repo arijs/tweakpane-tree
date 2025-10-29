@@ -7,7 +7,8 @@
 	@extend %tp-input;
 
 	cursor: default;
-	min-height: calc(#{tp.cssVar('container-unit-size')} * 2);
+	// Remove fixed min-height, let the tree determine the height
+	height: auto;
 	position: relative;
 
 	&.#{tp.$prefix}-v-disabled {

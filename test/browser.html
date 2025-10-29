@@ -46,6 +46,7 @@
 		// Add tree binding with sample data
 		pane.addBinding(params, 'selectedItem', {
 			view: 'tree',
+			maxHeight: 200, // Limit height to 200px with scrolling
 			children: [
 				{
 					label: 'Colors',
@@ -53,12 +54,26 @@
 						{ label: 'Red', value: '#ff0000' },
 						{ label: 'Green', value: '#00ff00' },
 						{ label: 'Blue', value: '#0000ff' },
+						{ label: 'Yellow', value: '#ffff00' },
+						{ label: 'Cyan', value: '#00ffff' },
+						{ label: 'Magenta', value: '#ff00ff' },
 						{
 							label: 'Light Colors',
 							children: [
 								{ label: 'Light Red', value: '#ffcccc' },
 								{ label: 'Light Green', value: '#ccffcc' },
-								{ label: 'Light Blue', value: '#ccccff' }
+								{ label: 'Light Blue', value: '#ccccff' },
+								{ label: 'Light Yellow', value: '#ffffcc' },
+								{ label: 'Light Cyan', value: '#ccffff' },
+								{ label: 'Light Magenta', value: '#ffccff' }
+							]
+						},
+						{
+							label: 'Dark Colors',
+							children: [
+								{ label: 'Dark Red', value: '#880000' },
+								{ label: 'Dark Green', value: '#008800' },
+								{ label: 'Dark Blue', value: '#000088' }
 							]
 						}
 					]
@@ -66,16 +81,30 @@
 				{
 					label: 'Sizes',
 					children: [
+						{ label: 'Extra Small', value: 5 },
 						{ label: 'Small', value: 10 },
 						{ label: 'Medium', value: 20 },
 						{ label: 'Large', value: 30 },
+						{ label: 'Extra Large', value: 40 },
 						{
-							label: 'Extra',
+							label: 'Custom Sizes',
 							children: [
-								{ label: 'Extra Small', value: 5 },
-								{ label: 'Extra Large', value: 40 }
+								{ label: 'Tiny', value: 2 },
+								{ label: 'Mini', value: 8 },
+								{ label: 'Huge', value: 50 },
+								{ label: 'Gigantic', value: 100 }
 							]
 						}
+					]
+				},
+				{
+					label: 'Fonts',
+					children: [
+						{ label: 'Arial', value: 'Arial' },
+						{ label: 'Times New Roman', value: 'Times New Roman' },
+						{ label: 'Courier New', value: 'Courier New' },
+						{ label: 'Georgia', value: 'Georgia' },
+						{ label: 'Verdana', value: 'Verdana' }
 					]
 				},
 				{

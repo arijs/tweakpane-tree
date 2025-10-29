@@ -7,6 +7,7 @@ interface Config {
 	value: Value<TreeValue>;
 	viewProps: ViewProps;
 	children: TreeChildren;
+	maxHeight?: number;
 }
 
 // Custom controller class should implement `Controller` interface
@@ -37,6 +38,7 @@ export class PluginController implements Controller<PluginView> {
 			viewProps: this.viewProps,
 			children: this.children,
 			onSelectItem: this.onSelectItem_,
+			maxHeight: config.maxHeight,
 		});
 	}
 

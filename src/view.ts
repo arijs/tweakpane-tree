@@ -11,6 +11,7 @@ interface Config {
 		pathValues: unknown[],
 		leafValue: unknown,
 	) => void;
+	maxHeight?: number;
 }
 
 // Create a class name generator from the view name
@@ -39,6 +40,12 @@ export class PluginView implements View {
 		this.element.classList.add(className());
 		// Bind view props to the element
 		config.viewProps.bindClassModifiers(this.element);
+
+		// Apply maxHeight if provided
+		if (config.maxHeight !== undefined) {
+			this.element.style.maxHeight = `${config.maxHeight}px`;
+			this.element.style.overflow = 'auto';
+		}
 
 		// Receive the bound value from the controller
 		this.value_ = config.value;
