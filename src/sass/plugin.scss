@@ -1,61 +1,85 @@
 // Import core styles
 @use '../../node_modules/@tweakpane/core/lib/sass/tp';
 
-// Additional style for the plugin
-.#{tp.$prefix}-tmpv {
+// Additional style for the tree plugin
+.#{tp.$prefix}-treev {
 	// Extend a general input view style
 	@extend %tp-input;
 
-	cursor: pointer;
-	display: grid;
-	grid-template-columns: repeat(10, 1fr);
-	grid-template-rows: repeat(auto-fit, 10px);
-	height: calc(#{tp.cssVar('container-unit-size')} * 3);
-	overflow: hidden;
+	cursor: default;
+	min-height: calc(#{tp.cssVar('container-unit-size')} * 2);
 	position: relative;
 
 	&.#{tp.$prefix}-v-disabled {
 		opacity: 0.5;
 	}
 
-	&_text {
-		// You can use CSS variables for styling. See declarations for details:
-		// ../../node_modules/@tweakpane/core/lib/sass/common/_defs.scss
-		color: tp.cssVar('input-fg');
-
-		bottom: 2px;
-		font-size: 0.9em;
-		line-height: 0.9;
-		opacity: 0.5;
-		position: absolute;
-		right: 2px;
+	&_container {
+		padding: 4px 0;
 	}
-	&_dot {
-		height: 10px;
-		line-height: 10px;
-		position: relative;
-		text-align: center;
 
+	// Tree node (with children) - using <details>
+	&_node {
+		margin: 0;
+		padding: 0;
+	}
+
+	// Summary element for tree nodes
+	&_summary {
+		color: tp.cssVar('input-fg');
+		cursor: pointer;
+		list-style: none;
+		padding: 4px 8px;
+		user-select: none;
+
+		&:hover {
+			background-color: tp.cssVar('button-bg-hover');
+		}
+
+		// Hide default disclosure triangle
+		&::-webkit-details-marker {
+			display: none;
+		}
+
+		// Custom disclosure triangle
 		&::before {
-			background-color: tp.cssVar('input-fg');
-			content: '';
-			border-radius: 1px;
-			height: 2px;
-			left: 50%;
-			margin-left: -1px;
-			margin-top: -1px;
-			position: absolute;
-			top: 50%;
-			width: 2px;
+			content: '▸';
+			display: inline-block;
+			margin-right: 4px;
+			transition: transform 0.15s ease;
 		}
 	}
-	&_frac {
-		background-color: tp.cssVar('input-fg');
-		border-radius: 1px;
-		height: 2px;
-		left: 50%;
-		margin-top: -1px;
-		position: absolute;
-		top: 50%;
+
+	// When details is open, rotate the triangle
+	&_node[open] > &_summary::before {
+		transform: rotate(90deg);
+	}
+
+	// Selectable summary (node with value)
+	&_summary#{&}_selectable {
+		&:hover {
+			background-color: tp.cssVar('button-bg-active');
+		}
+	}
+
+	// Children container
+	&_children {
+		padding-left: 16px;
+	}
+
+	// Leaf option
+	&_option {
+		color: tp.cssVar('input-fg');
+		cursor: pointer;
+		padding: 4px 8px;
+		user-select: none;
+
+		&:hover {
+			background-color: tp.cssVar('button-bg-hover');
+		}
+
+		&:active {
+			background-color: tp.cssVar('button-bg-active');
+		}
 	}
 }

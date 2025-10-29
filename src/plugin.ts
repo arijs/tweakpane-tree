@@ -3,19 +3,38 @@ import {
 	BindingTarget,
 	CompositeConstraint,
 	createPlugin,
-	createRangeConstraint,
-	createStepConstraint,
 	InputBindingPlugin,
 	parseRecord,
 } from '@tweakpane/core';
 
 import {PluginController} from './controller.js';
 
+// Tree option (leaf node)
+export interface TreeOption {
+	label: string;
+	value?: unknown;
+}
+
+// Tree node with children (branch node)
+export interface TreeNode {
+	label: string;
+	children: TreeChildren;
+	value?: unknown;
+}
+
+// Children can be a mix of options and tree nodes
+export type TreeChildren = (TreeOption | TreeNode)[];
+
+// The external value that will be bound
+export interface TreeValue {
+	treePathIndices: number[];
+	treePathValues: unknown[];
+	leafValue: unknown;
+}
+
 export interface PluginInputParams extends BaseInputParams {
-	max?: number;
-	min?: number;
-	step?: number;
-	view: 'dots';
+	children: TreeChildren;
+	view: 'tree';
 }
 
 // NOTE: JSDoc comments of `InputBindingPlugin` can be useful to know details about each property
@@ -25,12 +44,12 @@ export interface PluginInputParams extends BaseInputParams {
 // - converts `Ex` into `In` and holds it
 // - P is the type of the parsed parameters
 //
-export const TemplateInputPlugin: InputBindingPlugin<
-	number,
-	number,
+export const TreeInputPlugin: InputBindingPlugin<
+	TreeValue,
+	TreeValue,
 	PluginInputParams
 > = createPlugin({
-	id: 'input-template',
+	id: 'input-tree',
 
 	// type: The plugin type.
 	// - 'input': Input binding
@@ -39,19 +58,38 @@ export const TemplateInputPlugin: InputBindingPlugin<
 	type: 'input',
 
 	accept(exValue: unknown, params: Record<string, unknown>) {
-		if (typeof exValue !== 'number') {
+		// Check if exValue has the correct structure
+		if (
+			typeof exValue !== 'object' ||
+			exValue === null ||
+			!('treePathIndices' in exValue) ||
+			!('treePathValues' in exValue) ||
+			!('leafValue' in exValue)
+		) {
 			// Return null to deny the user input
+			return null;
+		}
+
+		const value = exValue as TreeValue;
+		if (
+			!Array.isArray(value.treePathIndices) ||
+			!Array.isArray(value.treePathValues)
+		) {
+			return null;
+		}
+
+		// Validate children parameter manually
+		if (!params.children || !Array.isArray(params.children)) {
 			return null;
 		}
 
 		// Parse parameters object
 		const result = parseRecord<PluginInputParams>(params, (p) => ({
 			// `view` option may be useful to provide a custom control for primitive values
-			view: p.required.constant('dots'),
-
-			max: p.optional.number,
-			min: p.optional.number,
-			step: p.optional.number,
+			view: p.required.constant('tree'),
+			children: p.required.custom<TreeChildren>(() => {
+				return params.children as TreeChildren;
+			}),
 		}));
 		if (!result) {
 			return null;
@@ -59,40 +97,51 @@ export const TemplateInputPlugin: InputBindingPlugin<
 
 		// Return a typed value and params to accept the user input
 		return {
-			initialValue: exValue,
+			initialValue: value,
 			params: result,
 		};
 	},
 
 	binding: {
 		reader(_args) {
-			return (exValue: unknown): number => {
+			return (exValue: unknown): TreeValue => {
 				// Convert an external unknown value into the internal value
-				return typeof exValue === 'number' ? exValue : 0;
+				// Only read the treePathIndices property as per requirements
+				if (
+					typeof exValue === 'object' &&
+					exValue !== null &&
+					'treePathIndices' in exValue
+				) {
+					const value = exValue as TreeValue;
+					return {
+						treePathIndices: Array.isArray(value.treePathIndices)
+							? [...value.treePathIndices]
+							: [],
+						treePathValues: [],
+						leafValue: undefined,
+					};
+				}
+				return {
+					treePathIndices: [],
+					treePathValues: [],
+					leafValue: undefined,
+				};
 			};
 		},
 
-		constraint(args) {
-			// Create a value constraint from the user input
-			const constraints = [];
-			// You can reuse existing functions of the default plugins
-			const cr = createRangeConstraint(args.params);
-			if (cr) {
-				constraints.push(cr);
-			}
-			const cs = createStepConstraint(args.params);
-			if (cs) {
-				constraints.push(cs);
-			}
-			// Use `CompositeConstraint` to combine multiple constraints
-			return new CompositeConstraint(constraints);
+		constraint(_args) {
+			// No constraints for tree values
+			return new CompositeConstraint([]);
 		},
 
 		writer(_args) {
-			return (target: BindingTarget, inValue) => {
-				// Use `target.write()` to write the primitive value to the target,
-				// or `target.writeProperty()` to write a property of the target
-				target.write(inValue);
+			return (target: BindingTarget, inValue: TreeValue) => {
+				// Write all three properties to the target
+				target.write({
+					treePathIndices: [...inValue.treePathIndices],
+					treePathValues: [...inValue.treePathValues],
+					leafValue: inValue.leafValue,
+				});
 			};
 		},
 	},
@@ -102,6 +151,7 @@ export const TemplateInputPlugin: InputBindingPlugin<
 		return new PluginController(args.document, {
 			value: args.value,
 			viewProps: args.viewProps,
+			children: args.params.children,
 		});
 	},
 });

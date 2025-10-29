@@ -1,20 +1,37 @@
-import {ClassName, mapRange, Value, View, ViewProps} from '@tweakpane/core';
+import {ClassName, Value, View, ViewProps} from '@tweakpane/core';
+
+import {TreeChildren, TreeNode, TreeOption, TreeValue} from './plugin.js';
 
 interface Config {
-	value: Value<number>;
+	value: Value<TreeValue>;
 	viewProps: ViewProps;
+	children: TreeChildren;
+	onSelectItem: (
+		pathIndices: number[],
+		pathValues: unknown[],
+		leafValue: unknown,
+	) => void;
 }
 
 // Create a class name generator from the view name
-// ClassName('tmp') will generate a CSS class name like `tp-tmpv`
-const className = ClassName('tmp');
+// ClassName('tree') will generate a CSS class name like `tp-treev`
+const className = ClassName('tree');
+
+// Helper function to check if an item is a tree node (has children)
+function isTreeNode(item: TreeOption | TreeNode): item is TreeNode {
+	return 'children' in item && Array.isArray(item.children);
+}
 
 // Custom view class should implement `View` interface
 export class PluginView implements View {
 	public readonly element: HTMLElement;
-	private value_: Value<number>;
-	private dotElems_: HTMLElement[] = [];
-	private textElem_: HTMLElement;
+	private value_: Value<TreeValue>;
+	private children_: TreeChildren;
+	private onSelectItem_: (
+		pathIndices: number[],
+		pathValues: unknown[],
+		leafValue: unknown,
+	) => void;
 
 	constructor(doc: Document, config: Config) {
 		// Create a root element for the plugin
@@ -28,53 +45,143 @@ export class PluginView implements View {
 		// Handle 'change' event of the value
 		this.value_.emitter.on('change', this.onValueChange_.bind(this));
 
-		// Create child elements
-		this.textElem_ = doc.createElement('div');
-		this.textElem_.classList.add(className('text'));
-		this.element.appendChild(this.textElem_);
+		// Store children and callback
+		this.children_ = config.children;
+		this.onSelectItem_ = config.onSelectItem;
 
-		// Apply the initial value
-		this.refresh_();
+		// Build the tree
+		this.buildTree_();
 
 		config.viewProps.handleDispose(() => {
 			// Called when the view is disposing
-			console.log('TODO: dispose view');
 		});
 	}
 
-	private refresh_(): void {
-		const rawValue = this.value_.rawValue;
+	private buildTree_(): void {
+		// Clear existing content
+		this.element.innerHTML = '';
 
-		this.textElem_.textContent = rawValue.toFixed(2);
+		// Build tree structure
+		const treeContainer = this.element.ownerDocument.createElement('div');
+		treeContainer.classList.add(className('container'));
 
-		while (this.dotElems_.length > 0) {
-			const elem = this.dotElems_.shift();
-			if (elem) {
-				this.element.removeChild(elem);
-			}
-		}
+		this.renderTreeLevel_(
+			treeContainer,
+			this.children_,
+			[],
+			[],
+			this.element.ownerDocument,
+		);
 
-		const doc = this.element.ownerDocument;
-		const dotCount = Math.floor(rawValue);
-		for (let i = 0; i < dotCount; i++) {
-			const dotElem = doc.createElement('div');
-			dotElem.classList.add(className('dot'));
-
-			if (i === dotCount - 1) {
-				const fracElem = doc.createElement('div');
-				fracElem.classList.add(className('frac'));
-				const frac = rawValue - Math.floor(rawValue);
-				fracElem.style.width = `${frac * 100}%`;
-				fracElem.style.opacity = String(mapRange(frac, 0, 1, 1, 0.2));
-				dotElem.appendChild(fracElem);
-			}
-
-			this.dotElems_.push(dotElem);
-			this.element.appendChild(dotElem);
-		}
+		this.element.appendChild(treeContainer);
 	}
 
-	private onValueChange_() {
-		this.refresh_();
+	private renderTreeLevel_(
+		container: HTMLElement,
+		items: TreeChildren,
+		pathIndices: number[],
+		pathValues: unknown[],
+		doc: Document,
+	): void {
+		items.forEach((item, index) => {
+			if (isTreeNode(item)) {
+				// Render a tree node with <details> and <summary>
+				this.renderTreeNode_(
+					container,
+					item,
+					index,
+					pathIndices,
+					pathValues,
+					doc,
+				);
+			} else {
+				// Render a leaf option
+				this.renderTreeOption_(
+					container,
+					item,
+					index,
+					pathIndices,
+					pathValues,
+					doc,
+				);
+			}
+		});
+	}
+
+	private renderTreeNode_(
+		container: HTMLElement,
+		node: TreeNode,
+		index: number,
+		pathIndices: number[],
+		pathValues: unknown[],
+		doc: Document,
+	): void {
+		const details = doc.createElement('details');
+		details.classList.add(className('node'));
+
+		const summary = doc.createElement('summary');
+		summary.classList.add(className('summary'));
+		summary.textContent = node.label;
+
+		// If the node itself has a value, make it selectable
+		if ('value' in node && node.value !== undefined) {
+			summary.addEventListener('click', (e) => {
+				// Only handle the label click, not the disclosure triangle
+				const target = e.target as HTMLElement;
+				if (target.tagName === 'SUMMARY') {
+					e.preventDefault();
+					const newPathIndices = [...pathIndices, index];
+					const newPathValues = [...pathValues, node.value];
+					this.onSelectItem_(newPathIndices, newPathValues, node.value);
+				}
+			});
+			summary.classList.add(className('selectable'));
+		}
+
+		details.appendChild(summary);
+
+		// Render children in a nested container
+		const childContainer = doc.createElement('div');
+		childContainer.classList.add(className('children'));
+
+		const newPathIndices = [...pathIndices, index];
+		const newPathValues = [...pathValues, node.value];
+
+		this.renderTreeLevel_(
+			childContainer,
+			node.children,
+			newPathIndices,
+			newPathValues,
+			doc,
+		);
+
+		details.appendChild(childContainer);
+		container.appendChild(details);
+	}
+
+	private renderTreeOption_(
+		container: HTMLElement,
+		option: TreeOption,
+		index: number,
+		pathIndices: number[],
+		pathValues: unknown[],
+		doc: Document,
+	): void {
+		const optionElem = doc.createElement('div');
+		optionElem.classList.add(className('option'));
+		optionElem.textContent = option.label;
+
+		optionElem.addEventListener('click', () => {
+			const newPathIndices = [...pathIndices, index];
+			const newPathValues = [...pathValues, option.value];
+			this.onSelectItem_(newPathIndices, newPathValues, option.value);
+		});
+
+		container.appendChild(optionElem);
+	}
+
+	private onValueChange_(): void {
+		// Could update visual selection state here if needed
+		// For now, we'll keep it simple
 	}
 }

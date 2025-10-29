@@ -2,27 +2,94 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title></title>
+	<title>Tweakpane Tree Plugin Test</title>
+	<style>
+		body {
+			font-family: sans-serif;
+			margin: 20px;
+		}
+		#info {
+			margin-top: 20px;
+			padding: 10px;
+			background: #f0f0f0;
+			border-radius: 4px;
+		}
+	</style>
 </head>
 <body>
+	<h1>Tweakpane Tree Plugin Test</h1>
+	<div id="pane-container"></div>
+	<div id="info">
+		<h3>Current Value:</h3>
+		<pre id="value-display"></pre>
+	</div>
+
 	<script type="module">
 		import {Pane} from '../node_modules/tweakpane/dist/tweakpane.min.js';
-		import * as TweakpaneTemplatePlugin from '../dist/tweakpane-plugin-template.js';
+		import * as TweakpaneTreePlugin from '../dist/tweakpane-plugin-tree.js';
 
 		const params = {
-			prop: 3,
+			selectedItem: {
+				treePathIndices: [],
+				treePathValues: [],
+				leafValue: undefined
+			}
 		};
 
-		const pane = new Pane();
-		// Register plugin
-		pane.registerPlugin(TweakpaneTemplatePlugin);
-
-		// TODO: Update parameters for your plugin
-		pane.addBinding(params, 'prop', {
-			view: 'dots',
-		}).on('change', (ev) => {
-			console.log(ev.value);
+		const pane = new Pane({
+			container: document.getElementById('pane-container')
 		});
+
+		// Register plugin
+		pane.registerPlugin(TweakpaneTreePlugin);
+
+		// Add tree binding with sample data
+		pane.addBinding(params, 'selectedItem', {
+			view: 'tree',
+			children: [
+				{
+					label: 'Colors',
+					children: [
+						{ label: 'Red', value: '#ff0000' },
+						{ label: 'Green', value: '#00ff00' },
+						{ label: 'Blue', value: '#0000ff' },
+						{
+							label: 'Light Colors',
+							children: [
+								{ label: 'Light Red', value: '#ffcccc' },
+								{ label: 'Light Green', value: '#ccffcc' },
+								{ label: 'Light Blue', value: '#ccccff' }
+							]
+						}
+					]
+				},
+				{
+					label: 'Sizes',
+					children: [
+						{ label: 'Small', value: 10 },
+						{ label: 'Medium', value: 20 },
+						{ label: 'Large', value: 30 },
+						{
+							label: 'Extra',
+							children: [
+								{ label: 'Extra Small', value: 5 },
+								{ label: 'Extra Large', value: 40 }
+							]
+						}
+					]
+				},
+				{
+					label: 'Standalone Option',
+					value: 'standalone'
+				}
+			]
+		}).on('change', (ev) => {
+			console.log('Tree value changed:', ev.value);
+			document.getElementById('value-display').textContent = JSON.stringify(ev.value, null, 2);
+		});
+
+		// Initialize display
+		document.getElementById('value-display').textContent = JSON.stringify(params.selectedItem, null, 2);
 
 		window.pane = pane;
 	</script>
