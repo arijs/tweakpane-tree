@@ -6,17 +6,16 @@ import Replace from '@rollup/plugin-replace';
 import Typescript from '@rollup/plugin-typescript';
 import Autoprefixer from 'autoprefixer';
 import Postcss from 'postcss';
-import Cleanup from 'rollup-plugin-cleanup';
-import {terser as Terser} from 'rollup-plugin-terser';
-import Sass from 'sass';
+// import Cleanup from 'rollup-plugin-cleanup';
+import terser from '@rollup/plugin-terser';
+import { compileAsync as sassCompileAsync } from 'sass';
 
-import Package from './package.json';
+import Package from './package.json' with {type: 'json'};
 
 async function compileCss() {
-	const css = Sass.renderSync({
-		file: 'src/sass/plugin.scss',
-		outputStyle: 'compressed',
-	}).css.toString();
+	const css = (await sassCompileAsync('src/sass/plugin.scss', {
+		style: 'compressed',
+	})).css.toString();
 
 	const result = await Postcss([Autoprefixer]).process(css, {
 		from: undefined,
@@ -44,14 +43,14 @@ function getPlugins(css, shouldMinify) {
 		}),
 	];
 	if (shouldMinify) {
-		plugins.push(Terser());
+		plugins.push(terser());
 	}
 	return [
 		...plugins,
 		// https://github.com/microsoft/tslib/issues/47
-		Cleanup({
-			comments: 'none',
-		}),
+		// Cleanup({
+		// 	comments: 'none',
+		// }),
 	];
 }
 
