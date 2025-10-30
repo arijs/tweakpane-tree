@@ -5,7 +5,7 @@ import {
 	createPlugin,
 	InputBindingPlugin,
 	parseRecord,
-} from '@tweakpane/core';
+} from '@arijs/tweakpane-core';
 
 import {PluginController} from './controller.js';
 

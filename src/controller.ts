@@ -1,4 +1,4 @@
-import {Controller, Value, ViewProps} from '@tweakpane/core';
+import {Controller, Value, ViewProps} from '@arijs/tweakpane-core';
 
 import {TreeChildren, TreeValue} from './plugin.js';
 import {PluginView} from './view.js';
