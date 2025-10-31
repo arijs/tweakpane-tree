@@ -18,15 +18,15 @@
 </head>
 <body>
 	<h1>Tweakpane Tree Plugin Test</h1>
-	<div id="pane-container"></div>
+	<div id="pane-container" style="--tp-blade-value-width: auto;"></div>
 	<div id="info">
 		<h3>Current Value:</h3>
 		<pre id="value-display"></pre>
 	</div>
 
 	<script type="module">
-		import {Pane} from '../node_modules/tweakpane/dist/tweakpane.min.js';
-		import * as TweakpaneTreePlugin from '../dist/tweakpane-plugin-tree.js';
+		import {Pane} from '../node_modules/@arijs/tweakpane/dist/tweakpane.min.js';
+		import * as TweakpaneTreePlugin from '../dist/arijs-tweakpane-plugin-tree.js';
 
 		const params = {
 			selectedItem: {
@@ -44,9 +44,9 @@
 		pane.registerPlugin(TweakpaneTreePlugin);
 
 		// Add tree binding with sample data
-		pane.addBinding(params, 'selectedItem', {
+		const treeApi = pane.addBinding(params, 'selectedItem', {
 			view: 'tree',
-			maxHeight: 200, // Limit height to 200px with scrolling
+			maxHeight: `min(calc(100vh - 6em), 100em)`, // Limit height to 100em with scrolling
 			children: [
 				{
 					label: 'Colors',
@@ -108,7 +108,7 @@
 					]
 				},
 				{
-					label: 'Standalone Option',
+					label: 'Standalone Option Long Long Long Long Long Looooooooooooooooooooooooooooooooooong label',
 					value: 'standalone'
 				}
 			]
@@ -121,6 +121,7 @@
 		document.getElementById('value-display').textContent = JSON.stringify(params.selectedItem, null, 2);
 
 		window.pane = pane;
+		window.treeApi = treeApi;
 	</script>
 </body>
 </html>

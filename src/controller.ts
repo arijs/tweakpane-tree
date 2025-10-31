@@ -7,7 +7,7 @@ interface Config {
 	value: Value<TreeValue>;
 	viewProps: ViewProps;
 	children: TreeChildren;
-	maxHeight?: number;
+	maxHeight?: string;
 }
 
 // Custom controller class should implement `Controller` interface
