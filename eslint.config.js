@@ -5,12 +5,7 @@ import simpleImportSort from 'eslint-plugin-simple-import-sort'
 
 // Merge recommended rules from the TypeScript plugin when available so the
 // flat config behaves similarly to `extends: ['plugin:@typescript-eslint/recommended']`.
-const tsRecommendedRules =
-	(tsPlugin &&
-		tsPlugin.configs &&
-		tsPlugin.configs.recommended &&
-		tsPlugin.configs.recommended.rules) ||
-	{}
+const tsRecommendedRules = tsPlugin?.configs?.recommended?.rules || {}
 
 // ESM flat-config for ESLint v9+
 // Keeps config minimal and local to this project. Adjust rules as needed.
@@ -19,9 +14,34 @@ export default [
 	{
 		ignores: ['dist/**', 'node_modules/**', '**/*.d.ts'],
 	},
+	// Top-level tooling/config files (vite config, scripts) - parse with the TS parser
+	// but do NOT set `parserOptions.project` so they don't need to be part of the
+	// `tsconfig` used for the library sources.
+	{
+		files: ['vite.config.ts', 'scripts/**/*.ts'],
+		ignores: ['dist/**', 'node_modules/**'],
+		languageOptions: {
+			parser: tsParser,
+			parserOptions: {
+				sourceType: 'module',
+			},
+		},
+		plugins: {
+			'simple-import-sort': simpleImportSort,
+			prettier: prettierPlugin,
+		},
+		rules: {
+			'prettier/prettier': 'error',
+			'simple-import-sort/imports': 'error',
+			'simple-import-sort/exports': 'error',
+		},
+	},
 	// TypeScript files use the TypeScript parser and project-aware rules
 	{
-		files: ['**/*.ts'],
+		// Limit to library sources so top-level config files (vite.config.ts)
+		// are handled by a separate block above and won't get merged with
+		// project-aware parserOptions.
+		files: ['src/**/*.ts'],
 		ignores: ['dist/**', 'node_modules/**'],
 		languageOptions: {
 			parser: tsParser,

@@ -9,6 +9,7 @@ This repository implements a Tweakpane input plugin (tree control). The guidance
 - `src/view.ts` — DOM structure and CSS class naming (uses `ClassName('tree')`).
 - `src/index.ts` — bundle exports (`css` token, `plugins` array).
 - `rollup.config.js` — CSS injection (`__css__` replacement), build outputs, and dev vs prod flags.
+- `vite.config.ts` — CSS injection (compiled SASS inlined via a small plugin), build outputs, and dev vs prod flags.
 - `scripts/*` — packaging helpers (`dist-name.js`, `assets-append-version.js`).
 - `test/browser.html` — minimal manual test/visual example used by `npm run start`.
 
@@ -16,7 +17,7 @@ This repository implements a Tweakpane input plugin (tree control). The guidance
 
 - This is a small single-plugin package. The plugin is implemented using the `InputBindingPlugin` contract from `@arijs/tweakpane-core` (see `createPlugin(...)` in `src/plugin.ts`).
 - Data flow: external bound object (consumer) -> `binding.reader` (reads only `treePathIndices`) -> plugin holds internal `TreeValue` -> user interactions call controller -> controller sets `value.rawValue` -> `binding.writer` writes all three properties back to the consumer.
-- The CSS is compiled from `src/sass/plugin.scss` and inlined into the `css` export by the Rollup `Replace` plugin via the `__css__` token. Do not search for a separate compiled CSS file — it's embedded at build time.
+- The CSS is compiled from `src/sass/plugin.scss` and inlined into the `css` export by the bundler at build time (see `vite.config.ts`). Do not search for a separate compiled CSS file — it's embedded into the bundle.
 
 ## Project-specific conventions
 
@@ -25,11 +26,13 @@ This repository implements a Tweakpane input plugin (tree control). The guidance
 - Class naming: use the `ClassName('tree')` helper in `view.ts` (example: `className('container')`) — don't hardcode Tweakpane class names elsewhere.
 - Export shape: `src/index.ts` exports `id`, `css`, and `plugins = [TreeInputPlugin]`. Consumers import the plugin and call `pane.registerPlugin(...)` (see README example).
 
+- Tooling files (e.g. `vite.config.ts`, top-level `scripts/*.ts`) are linted, but ESLint runs them without type-aware rules by design — the flat config omits `parserOptions.project` for these files. If you need type-aware linting for those files, add a root `tsconfig.json` that includes them and update `eslint.config.js` accordingly.
+
 ## Build / dev / test workflows (explicit commands)
 
 - Install deps: `npm install` (repository uses npm; devDependencies are listed in `package.json`).
 - Dev server + watch: `npm run start` — runs the bundler watch and a static `http-server` opening `test/browser.html`. Useful for quick visual debugging.
-- Build (dev): `npm run build:dev` — rollup build (unminified).
+- Build (dev): `npm run build:dev` — Vite build (unminified).
 - Build (prod): `npm run build:dts && npm run build:prod` or `npm run build` which runs the `build:*` tasks in parallel; `BUILD=production` environment triggers minification.
 - Type definitions: `npm run build:dts` runs `tsc --project src/tsconfig-dts.json` (dts build uses a separate tsconfig in `src`).
 - Lint/test: `npm test` — currently runs `eslint` over `src/**/*.ts`. The repo treats lint as the unit test.
@@ -41,12 +44,12 @@ Notes: CI or prepublish steps call `npm test` (see `prepublishOnly`), so ensure 
 
 - Small behavior changes: prefer editing `controller.ts` (logic) and `view.ts` (rendering) together. Keep controller/view plumbing: controller creates `PluginView` and passes `onSelectItem` callback.
 - Adding config options: add parsing in `accept(...params)` inside `src/plugin.ts` using `parseRecord(...)` (look how `maxHeight` is parsed). Keep acceptance checks defensive (null returns when invalid).
-- Changing CSS: update `src/sass/plugin.scss`; rollup compiles and inlines it. To preview styles, run `npm run start` and edit SASS; watch tasks are already configured (`watch:sass`).
+- Changing CSS: update `src/sass/plugin.scss`; the bundler (Vite) compiles and inlines it. To preview styles, run `npm run start` and edit SASS; watch tasks are already configured (`watch:sass`).
 
 ## Integration points & dependencies
 
 - Peer dependency: `@arijs/tweakpane` (consumer must provide it). The plugin code uses `@arijs/tweakpane-core` at build time.
-- Bundling: the package outputs an ESM file to `dist/` (name derived in `rollup.config.js` and `scripts/dist-name.js`).
+- Bundling: the package outputs an ESM file to `dist/` (name derived in `vite.config.ts` and `scripts/dist-name.js`).
 
 ## When in doubt — concrete pointers
 

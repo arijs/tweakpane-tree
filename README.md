@@ -131,6 +131,18 @@ See the [test page](test/browser.html) for a complete working example.
 ### Nested Selection
 ![Nested Selection](https://github.com/user-attachments/assets/712ac423-eddd-465e-bb9e-88b535a4fe25)
 
+## Build / dev / test workflows
+
+- Install deps: `npm install` (repository uses npm; devDependencies are listed in `package.json`).
+- Dev server: `npm run dev` or `npm start` — runs the Vite dev server and opens `test/browser.html` for quick visual debugging.
+- Build (dev): `npm run build:dev` — Vite build (unminified output).
+- Build (prod): `npm run build:prod` — Vite build in production mode (minified). The convenience script `npm run build` runs both `build:dts` and Vite builds in parallel.
+- Type definitions: `npm run build:dts` runs `tsc --project src/tsconfig-dts.json` to emit `.d.ts` files into `dist/types`.
+- Lint/test: `npm test` — runs ESLint (this project treats lint as the unit test).
+- Packaging helpers: after build, `npm run assets` will append versions and create zip artifacts.
+
+Notes: The CSS is compiled from `src/sass/plugin.scss` and inlined into the `css` export by the bundler at build time (see `vite.config.ts`). CI and prepublish steps call `npm test` (see `prepublishOnly`), so ensure lint passes before publishing.
+
 ## License
 
 MIT
