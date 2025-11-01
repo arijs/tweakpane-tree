@@ -5,37 +5,37 @@ import {
 	createPlugin,
 	InputBindingPlugin,
 	parseRecord,
-} from '@arijs/tweakpane-core';
+} from '@arijs/tweakpane-core'
 
-import {PluginController} from './controller.js';
+import {PluginController} from './controller.js'
 
 // Tree option (leaf node)
 export interface TreeOption {
-	label: string;
-	value?: unknown;
+	label: string
+	value?: unknown
 }
 
 // Tree node with children (branch node)
 export interface TreeNode {
-	label: string;
-	children: TreeChildren;
-	value?: unknown;
+	label: string
+	children: TreeChildren
+	value?: unknown
 }
 
 // Children can be a mix of options and tree nodes
-export type TreeChildren = (TreeOption | TreeNode)[];
+export type TreeChildren = (TreeOption | TreeNode)[]
 
 // The external value that will be bound
 export interface TreeValue {
-	treePathIndices: number[];
-	treePathValues: unknown[];
-	leafValue: unknown;
+	treePathIndices: number[]
+	treePathValues: unknown[]
+	leafValue: unknown
 }
 
 export interface PluginInputParams extends BaseInputParams {
-	children: TreeChildren;
-	view: 'tree';
-	maxHeight?: string | undefined;
+	children: TreeChildren
+	view: 'tree'
+	maxHeight?: string | undefined
 }
 
 // NOTE: JSDoc comments of `InputBindingPlugin` can be useful to know details about each property
@@ -68,20 +68,20 @@ export const TreeInputPlugin: InputBindingPlugin<
 			!('leafValue' in exValue)
 		) {
 			// Return null to deny the user input
-			return null;
+			return null
 		}
 
-		const value = exValue as TreeValue;
+		const value = exValue as TreeValue
 		if (
 			!Array.isArray(value.treePathIndices) ||
 			!Array.isArray(value.treePathValues)
 		) {
-			return null;
+			return null
 		}
 
 		// Validate children parameter manually
 		if (!params.children || !Array.isArray(params.children)) {
-			return null;
+			return null
 		}
 
 		// Parse parameters object
@@ -89,19 +89,19 @@ export const TreeInputPlugin: InputBindingPlugin<
 			// `view` option may be useful to provide a custom control for primitive values
 			view: p.required.constant('tree'),
 			children: p.required.custom<TreeChildren>(() => {
-				return params.children as TreeChildren;
+				return params.children as TreeChildren
 			}),
 			maxHeight: p.optional.string,
-		}));
+		}))
 		if (!result) {
-			return null;
+			return null
 		}
 
 		// Return a typed value and params to accept the user input
 		return {
 			initialValue: value,
 			params: result,
-		};
+		}
 	},
 
 	binding: {
@@ -114,26 +114,26 @@ export const TreeInputPlugin: InputBindingPlugin<
 					exValue !== null &&
 					'treePathIndices' in exValue
 				) {
-					const value = exValue as TreeValue;
+					const value = exValue as TreeValue
 					return {
 						treePathIndices: Array.isArray(value.treePathIndices)
 							? [...value.treePathIndices]
 							: [],
 						treePathValues: [],
 						leafValue: undefined,
-					};
+					}
 				}
 				return {
 					treePathIndices: [],
 					treePathValues: [],
 					leafValue: undefined,
-				};
-			};
+				}
+			}
 		},
 
 		constraint(_args) {
 			// No constraints for tree values
-			return new CompositeConstraint([]);
+			return new CompositeConstraint([])
 		},
 
 		writer(_args) {
@@ -143,8 +143,8 @@ export const TreeInputPlugin: InputBindingPlugin<
 					treePathIndices: [...inValue.treePathIndices],
 					treePathValues: [...inValue.treePathValues],
 					leafValue: inValue.leafValue,
-				});
-			};
+				})
+			}
 		},
 	},
 
@@ -155,6 +155,6 @@ export const TreeInputPlugin: InputBindingPlugin<
 			viewProps: args.viewProps,
 			children: args.params.children,
 			maxHeight: args.params.maxHeight,
-		});
+		})
 	},
-});
+})

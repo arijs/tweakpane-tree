@@ -1,36 +1,36 @@
-import {Controller, Value, ViewProps} from '@arijs/tweakpane-core';
+import {Controller, Value, ViewProps} from '@arijs/tweakpane-core'
 
-import {TreeChildren, TreeValue} from './plugin.js';
-import {PluginView} from './view.js';
+import {TreeChildren, TreeValue} from './plugin.js'
+import {PluginView} from './view.js'
 
 interface Config {
-	value: Value<TreeValue>;
-	viewProps: ViewProps;
-	children: TreeChildren;
-	maxHeight?: string;
+	value: Value<TreeValue>
+	viewProps: ViewProps
+	children: TreeChildren
+	maxHeight?: string
 }
 
 // Custom controller class should implement `Controller` interface
 export class PluginController implements Controller<PluginView> {
-	public readonly value: Value<TreeValue>;
-	public readonly view: PluginView;
-	public readonly viewProps: ViewProps;
-	public readonly children: TreeChildren;
+	public readonly value: Value<TreeValue>
+	public readonly view: PluginView
+	public readonly viewProps: ViewProps
+	public readonly children: TreeChildren
 
 	constructor(doc: Document, config: Config) {
-		this.onSelectItem_ = this.onSelectItem_.bind(this);
+		this.onSelectItem_ = this.onSelectItem_.bind(this)
 
 		// Receive the bound value from the plugin
-		this.value = config.value;
+		this.value = config.value
 
 		// and also view props
-		this.viewProps = config.viewProps;
+		this.viewProps = config.viewProps
 		this.viewProps.handleDispose(() => {
 			// Called when the controller is disposing
-		});
+		})
 
 		// Store the tree children
-		this.children = config.children;
+		this.children = config.children
 
 		// Create a custom view
 		this.view = new PluginView(doc, {
@@ -39,7 +39,7 @@ export class PluginController implements Controller<PluginView> {
 			children: this.children,
 			onSelectItem: this.onSelectItem_,
 			maxHeight: config.maxHeight,
-		});
+		})
 	}
 
 	private onSelectItem_(
@@ -52,6 +52,6 @@ export class PluginController implements Controller<PluginView> {
 			treePathIndices: pathIndices,
 			treePathValues: pathValues,
 			leafValue: leafValue,
-		};
+		}
 	}
 }

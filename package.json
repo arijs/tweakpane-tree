@@ -19,7 +19,8 @@
     "prepare": "run-s clean build",
     "prepublishOnly": "npm test",
     "start": "run-p watch server",
-    "test": "eslint --ext .ts \"src/**/*.ts\"",
+    "test_rem": "eslint --ext .ts \"**/*.ts\" && eslint --ext .js \"**/*.js\"",
+    "test": "eslint",
     "assets": "run-s clean build assets:version assets:zip",
     "assets:version": "node scripts/assets-append-version.js",
     "assets:zip": "zip -x '*types*' -j -r $(node scripts/dist-name.js)-$(cat package.json | npx json version).zip dist",
@@ -30,11 +31,13 @@
     "build:prod": "rollup --config rollup.config.js --environment BUILD:production",
     "format": "run-p format:*",
     "format:scss": "prettier --parser scss --write \"src/sass/**/*.scss\"",
-    "format:ts": "eslint --ext .ts --fix \"src/**/*.ts\"",
+    "format_rem:ts": "eslint --ext .ts --fix \"**/*.ts\"",
+    "format_rem:js": "eslint --ext .js --fix \"**/*.js\"",
+    "format:code": "eslint --fix",
     "server": "http-server -c-1 -o /test/browser.html",
     "watch": "run-p watch:*",
     "watch:sass": "onchange --initial --kill \"src/sass/**/*.scss\" -- npm run build:dev",
-    "watch:ts": "onchange --initial --kill \"src/**/*.ts\" -- rollup --config rollup.config.js"
+    "watch:ts": "onchange --initial --kill \"src/**/*.{ts,js}\" -- rollup --config rollup.config.js"
   },
   "devDependencies": {
     "@arijs/tweakpane-core": "^2.0.5",

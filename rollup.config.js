@@ -1,26 +1,28 @@
 /* eslint-env node */
 
-import Alias from '@rollup/plugin-alias';
-import {nodeResolve} from '@rollup/plugin-node-resolve';
-import Replace from '@rollup/plugin-replace';
-import Typescript from '@rollup/plugin-typescript';
-import Autoprefixer from 'autoprefixer';
-import Postcss from 'postcss';
+import Alias from '@rollup/plugin-alias'
+import {nodeResolve} from '@rollup/plugin-node-resolve'
+import Replace from '@rollup/plugin-replace'
 // import Cleanup from 'rollup-plugin-cleanup';
-import terser from '@rollup/plugin-terser';
-import { compileAsync as sassCompileAsync } from 'sass';
+import terser from '@rollup/plugin-terser'
+import Typescript from '@rollup/plugin-typescript'
+import Autoprefixer from 'autoprefixer'
+import Postcss from 'postcss'
+import {compileAsync as sassCompileAsync} from 'sass'
 
-import Package from './package.json' with {type: 'json'};
+import Package from './package.json' with {type: 'json'}
 
 async function compileCss() {
-	const css = (await sassCompileAsync('src/sass/plugin.scss', {
-		style: 'compressed',
-	})).css.toString();
+	const css = (
+		await sassCompileAsync('src/sass/plugin.scss', {
+			style: 'compressed',
+		})
+	).css.toString()
 
 	const result = await Postcss([Autoprefixer]).process(css, {
 		from: undefined,
-	});
-	return result.css.replace(/'/g, "\\'").trim();
+	})
+	return result.css.replace(/'/g, "\\'").trim()
 }
 
 function getPlugins(css, shouldMinify) {
@@ -41,9 +43,9 @@ function getPlugins(css, shouldMinify) {
 			__css__: css,
 			preventAssignment: false,
 		}),
-	];
+	]
 	if (shouldMinify) {
-		plugins.push(terser());
+		plugins.push(terser())
 	}
 	return [
 		...plugins,
@@ -51,7 +53,7 @@ function getPlugins(css, shouldMinify) {
 		// Cleanup({
 		// 	comments: 'none',
 		// }),
-	];
+	]
 }
 
 function getDistName(packageName) {
@@ -60,15 +62,15 @@ function getDistName(packageName) {
 	return packageName
 		.split(/[@/-]/)
 		.reduce((comps, comp) => (comp !== '' ? [...comps, comp] : comps), [])
-		.join('-');
+		.join('-')
 }
 
 export default async () => {
-	const production = process.env.BUILD === 'production';
-	const postfix = production ? '.min' : '';
+	const production = process.env.BUILD === 'production'
+	const postfix = production ? '.min' : ''
 
-	const distName = getDistName(Package.name);
-	const css = await compileCss();
+	const distName = getDistName(Package.name)
+	const css = await compileCss()
 	return {
 		input: 'src/index.ts',
 		external: ['tweakpane'],
@@ -84,9 +86,9 @@ export default async () => {
 		// Suppress `Circular dependency` warning
 		onwarn(warning, rollupWarn) {
 			if (warning.code === 'CIRCULAR_DEPENDENCY') {
-				return;
+				return
 			}
-			rollupWarn(warning);
+			rollupWarn(warning)
 		},
-	};
-};
+	}
+}
