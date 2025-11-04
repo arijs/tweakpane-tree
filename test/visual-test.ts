@@ -13,13 +13,13 @@ import looksSame, { type LooksSameResult } from 'looks-same'
 
 const rePathSepEnd = sep === '\\' ? /[\\]+$/ : /[\/]+$/
 
-const __dirname = fileURLToPath(new URL('../dist', import.meta.url)).replace(rePathSepEnd, '')
+const __dirname = fileURLToPath(new URL('..', import.meta.url)).replace(rePathSepEnd, '')
 
 const __dirTest = fileURLToPath(new URL('.', import.meta.url)).replace(rePathSepEnd, '')
 
 const __dirScreenshots = resolve(__dirTest, './__screenshots__')
 
-const treePage = await getPage('TreePage', 'browser.html')
+const treePage = await getPage('TreePage', 'test/browser.html')
 
 const logger = getLogger()
 
