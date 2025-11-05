@@ -123,13 +123,13 @@ See the [test page](test/browser.html) for a complete working example.
 ## Screenshots
 
 ### Initial State
-![Initial State](https://github.com/user-attachments/assets/37c8df16-2458-4226-a930-5fa19b52fb23)
+![Initial State](test/__screenshots__/s-treepage-00.png)
 
 ### Expanded Tree
-![Expanded Tree](https://github.com/user-attachments/assets/d8deba4f-9a71-4e28-a3f5-e0e6b9dae463)
+![Expanded Tree](test/__screenshots__/s-treepage-03-expanded.png)
 
 ### Nested Selection
-![Nested Selection](https://github.com/user-attachments/assets/712ac423-eddd-465e-bb9e-88b535a4fe25)
+![Nested Selection](test/__screenshots__/s-treepage-06-selected.png)
 
 ## Build / dev / test workflows
 
