@@ -35,7 +35,22 @@ This repository implements a Tweakpane input plugin (tree control). The guidance
 - Build (dev): `npm run build:dev` — Vite build (unminified).
 - Build (prod): `npm run build:dts && npm run build:prod` or `npm run build` which runs the `build:*` tasks in parallel; `BUILD=production` environment triggers minification.
 - Type definitions: `npm run build:dts` runs `tsc --project src/tsconfig-dts.json` (dts build uses a separate tsconfig in `src`).
-- Lint/test: `npm test` — currently runs `eslint` over `src/**/*.ts`. The repo treats lint as the unit test.
+ - Lint: `npm run lint` — runs `eslint` (this is the fast, canonical lint check used for development and CI validation).
+
+ - Test: `npm test` — runs `ts-node test/visual-test.ts`. This is a visual-regression style test that:
+
+ 	- starts a Vite dev server rooted at `test/` (default port 7357)
+ 	- launches Puppeteer and opens `test/browser.html`
+ 	- takes screenshots into `test/__screenshots__` (baseline files are `s-<slug>.png`)
+ 	- compares new screenshots with saved baselines using `looks-same` and writes diffs to `test/__screenshots__` when differences are found
+ 	- exits with non-zero status when visual diffs are detected
+
+ 	Options:
+
+ 	- `--accept` — run `npm test -- --accept` to accept the new screenshots as the new baselines (overwrites saved images)
+ 	- `--only-server` — run `npm test -- --only-server` to only start the static server (useful for manual debugging in a browser)
+
+	Note: Because `npm test` now runs the heavier visual test, use `npm run lint` for quick CI-style checks and local prepublish linting. The repository still contains some Vitest-based experiments (run with `npm run test-vitest`); they are incomplete and should be treated as experimental — ignore them for CI/publishing.
 - Packaging helpers: after build, `npm run assets` will append versions and create zip artifacts.
 
 Notes: CI or prepublish steps call `npm test` (see `prepublishOnly`), so ensure lint passes before publishing.
@@ -63,5 +78,26 @@ Notes: CI or prepublish steps call `npm test` (see `prepublishOnly`), so ensure 
 2. Run `npm test` (eslint) to satisfy prepublish checks.
 3. Use `npm run start` and open the served `test/browser.html` to verify visual/interactive behavior.
 
----
+## Troubleshooting — visual tests & Puppeteer
+
+If `npm test` (the visual test) fails or behaves unexpectedly, here are quick debugging steps and common fixes:
+
+- Check basics:
+	- Run `npm install` to ensure `puppeteer` and other deps are installed and the Chromium binary was downloaded (look under `node_modules/puppeteer/.local-chromium`).
+	- Try `npm test -- --only-server` to start the dev server only, then open `http://localhost:7357/test/browser.html` in your browser to inspect the page manually.
+
+- If Puppeteer fails to launch on CI or headless environments:
+	- Ensure the environment has required system libraries for Chromium (for Linux: libnss3, libx11, libxcomposite, libxrandr, libxss, libasound2, fonts, etc.).
+	- Prefer using the official CI runner images that include Chrome (for GitHub Actions use ubuntu-latest which has Chrome installed) or install Chrome/Chromium in your workflow and point Puppeteer to it via `PUPPETEER_EXECUTABLE_PATH`.
+	- Try running Puppeteer with sandboxing disabled if the runner requires it (example: `--no-sandbox --disable-setuid-sandbox`). If needed, run tests inside Docker with the proper flags or configure your CI to allow Chromium to run.
+
+- Debugging mismatches:
+	- Baseline screenshots are stored in `test/__screenshots__/s-<slug>.png`. New runs save `s-<slug>-new.png` and diffs are saved as `s-<slug>-diff.png` when differences appear.
+	- Use `npm test -- --accept` to accept new screenshots when UI changes are intentional.
+
+- Flaky results and timing:
+	- The visual test is sensitive to fonts, rendering differences, and network resources. Run the server locally (`--only-server`) and open the page to check fonts/resources.
+	- If tests fail intermittently, add small waits in the page or improve stable selectors/resources in `test/browser.html` if you maintain that test page.
+
+Note: The repository intentionally keeps some experimental Vitest tests (`npm run test-vitest`). They are not used in CI and can be ignored for publishing.
 If any section is unclear or you'd like examples expanded (unit test patterns, API surface with `@arijs/tweakpane-core`, or CI steps), tell me which part and I will iterate.

@@ -17,7 +17,7 @@
   ],
   "scripts": {
     "prepare": "run-s clean build",
-    "prepublishOnly": "npm test",
+    "prepublishOnly": "npm run lint",
     "start": "vite --open /test/browser.html",
     "dev": "vite",
     "test_rem": "eslint --ext .ts \"**/*.ts\" && eslint --ext .js \"**/*.js\"",

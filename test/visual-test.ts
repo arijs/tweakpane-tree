@@ -4,7 +4,7 @@ import { createReadStream } from 'node:fs'
 import { readFile, writeFile, unlink } from 'node:fs/promises'
 import { createHash } from 'node:crypto' //, getHashes
 import { createServer } from 'vite'
-import puppeteer, { type Browser } from 'puppeteer'
+import puppeteer, { ElementHandle, Page, type Browser } from 'puppeteer'
 import looksSame, { type LooksSameResult } from 'looks-same'
 
 // console.log(`hashes:`, getHashes())
@@ -146,6 +146,10 @@ function getScreenPath(slug: string, variant?: string | undefined) {
 	return `${__dirScreenshots}${sep}s-${slug}${variant ? `-${variant}` : ''}.png`
 }
 
+function waitForTimeout(page: Page, ms: number) {
+	return page.waitForFunction(() => new Promise(resolve => setTimeout(resolve, ms)))
+}
+
 // function getScreenPathGroup(slug, subVariant = '') {
 // 	return {
 // 		sClosed: getScreenPath(slug, `closed${subVariant}`),
@@ -157,7 +161,7 @@ function getScreenPath(slug: string, variant?: string | undefined) {
 // 	}
 // }
 
-const screenStepList = ['sInitial'] as const
+const screenStepList = ['sInitial', 'sHover', 'sExpanded', 'sCondensed', 'sSelected'] as const
 
 type ScreenStepKey = typeof screenStepList[number]
 
@@ -179,29 +183,53 @@ async function getPage(name: string, path: string) {
 	const slug = name.toLowerCase().replace(/\W+/g, '-')
 
 	const screenPathsSaved: ScreenStepMapPath = {
-		sInitial: getScreenPath(slug)
+		sInitial: getScreenPath(slug),
+		sHover: getScreenPath(slug, 'hover'),
+		sExpanded: getScreenPath(slug, 'expanded'),
+		sCondensed: getScreenPath(slug, 'condensed'),
+		sSelected: getScreenPath(slug, 'selected'),
 	}
 
 	const screenPathsNew: ScreenStepMapPath = {
-		sInitial: getScreenPath(slug, '-new')
+		sInitial: getScreenPath(slug, '-new'),
+		sHover: getScreenPath(slug, 'hover-new'),
+		sExpanded: getScreenPath(slug, 'expanded-new'),
+		sCondensed: getScreenPath(slug, 'condensed-new'),
+		sSelected: getScreenPath(slug, 'selected-new'),
 	}
 
 	const screenPathsDiff: ScreenStepMapPath = {
-		sInitial: getScreenPath(slug, '-diff')
+		sInitial: getScreenPath(slug, '-diff'),
+		sHover: getScreenPath(slug, 'hover-diff'),
+		sExpanded: getScreenPath(slug, 'expanded-diff'),
+		sCondensed: getScreenPath(slug, 'condensed-diff'),
+		sSelected: getScreenPath(slug, 'selected-diff'),
 	}
 
 	const screenHashesSaved: ScreenStepMapHash = {
 		sInitial: await hashFile(screenPathsSaved.sInitial),
+		sHover: await hashFile(screenPathsSaved.sHover),
+		sExpanded: await hashFile(screenPathsSaved.sExpanded),
+		sCondensed: await hashFile(screenPathsSaved.sCondensed),
+		sSelected: await hashFile(screenPathsSaved.sSelected),
 	}
 
 	const screenHashesNew: ScreenStepMapHash = {
 		sInitial: undefined,
+		sHover: undefined,
+		sExpanded: undefined,
+		sCondensed: undefined,
+		sSelected: undefined,
 	}
 
 	const screenErrors: any[] = []
 
 	const screenDiff: ScreenStepDiffResult = {
 		sInitial: undefined,
+		sHover: undefined,
+		sExpanded: undefined,
+		sCondensed: undefined,
+		sSelected: undefined,
 	}
 
 	return {
@@ -305,6 +333,96 @@ async function testPage(browser: Browser, testPage: TestPage) {
 
 	await testState(testPage, 'sInitial', 'initial', page)
 
+	// Expand a group (click the 'Colors' summary)
+	{
+		let colorsSummary: ElementHandle<Element> | null = null
+		try {
+			colorsSummary = await page.waitForSelector('[data-tree-summary="Colors"]', { timeout: 2000 })
+			if (colorsSummary) {
+				await colorsSummary.click()
+				await waitForTimeout(page, 300)
+				await testState(testPage, 'sExpanded', 'expanded', page)
+			} else {
+				logger.log(`expand target not found, skipping sExpanded`)
+			}
+		} catch (e) {
+			logger.error('error during expand step', e)
+		} finally {
+			colorsSummary?.dispose()
+		}
+	}
+
+	// Hover over an item (e.g. 'Red') to capture hover state
+	{
+		let redElem: ElementHandle<Element> | null = null
+		try {
+			redElem = await page.waitForSelector('[data-tree-option="Red"]', { timeout: 2000 })
+			if (redElem) {
+				await redElem.hover()
+				await waitForTimeout(page, 200)
+				await testState(testPage, 'sHover', 'hover', page)
+			} else {
+				logger.log(`hover target not found, skipping sHover`)
+			}
+		} catch (e) {
+			logger.error('error during hover step', e)
+		} finally {
+			redElem?.dispose()
+		}
+	}
+
+	// Condense (collapse) the group by clicking the summary again
+	{
+		let colorsSummary2: ElementHandle<Element> | null = null
+		try {
+			colorsSummary2 = await page.waitForSelector('[data-tree-summary="Colors"]', { timeout: 2000 })
+			if (colorsSummary2) {
+				await colorsSummary2.click()
+				await waitForTimeout(page, 300)
+				await testState(testPage, 'sCondensed', 'condensed', page)
+			}
+		} catch (e) {
+			logger.error('error during condense step', e)
+		} finally {
+			colorsSummary2?.dispose()
+		}
+	}
+
+	// Re-open and select an item (e.g. 'Green')
+	{
+		let colorsSummary3: ElementHandle<Element> | null = null
+		try {
+			colorsSummary3 = await page.waitForSelector('[data-tree-summary="Colors"]', { timeout: 2000 })
+			if (colorsSummary3) {
+				await colorsSummary3.click()
+				await waitForTimeout(page, 300)
+				{
+					let greenElem: ElementHandle<Element> | null = null
+					try {
+						greenElem = await page.waitForSelector('[data-tree-option="Green"]', { timeout: 2000 })
+						if (greenElem) {
+							await greenElem.click()
+							await waitForTimeout(page, 200)
+							await testState(testPage, 'sSelected', 'selected', page)
+						} else {
+							logger.log(`select target not found, skipping sSelected`)
+						}
+					} catch (e) {
+						logger.error('error during selection step', e)
+					} finally {
+						greenElem?.dispose()
+					}
+				}
+			} else {
+				logger.log(`re-open target not found, skipping selection flow`)
+			}
+		} catch (e) {
+			logger.error('error during selection step', e)
+		} finally {
+			colorsSummary3?.dispose()
+		}
+	}
+
 	// logger.log(`wait 1000 ms for good measure`)
 	// await new Promise(resolve => setTimeout(resolve, 1000))
 
@@ -339,7 +457,9 @@ async function testPage(browser: Browser, testPage: TestPage) {
 }
 
 async function acceptPageScreenshots(testPage: TestPage) {
-	await acceptStateScreenshots(testPage, 'sInitial')
+	for (const key of screenStepList) {
+		await acceptStateScreenshots(testPage, key as ScreenStepKey)
+	}
 }
 
 async function acceptStateScreenshots(testPage: TestPage, sKey: ScreenStepKey) {

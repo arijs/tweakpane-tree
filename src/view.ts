@@ -126,8 +126,19 @@ export class PluginView implements View {
 		const details = doc.createElement('details')
 		details.classList.add(className('node'))
 
+		// Add a stable data attribute for the node (helpful for visual tests)
+		details.setAttribute('data-tree-node', String(index))
+
+		// Prepare path info early so we can attach data attributes
+		const newPathIndices = [...pathIndices, index]
+		const newPathValues = [...pathValues, node.value]
+
 		const summary = doc.createElement('summary')
 		summary.classList.add(className('summary'))
+
+		// Expose a stable data attribute for the summary label and path used by tests
+		summary.setAttribute('data-tree-summary', String(node.label))
+		summary.setAttribute('data-tree-path', JSON.stringify(newPathIndices))
 		summary.textContent = node.label
 
 		// If the node itself has a value, make it selectable
@@ -151,8 +162,8 @@ export class PluginView implements View {
 		const childContainer = doc.createElement('div')
 		childContainer.classList.add(className('children'))
 
-		const newPathIndices = [...pathIndices, index]
-		const newPathValues = [...pathValues, node.value]
+		// Mark child container with path for easier querying
+		childContainer.setAttribute('data-tree-children-path', JSON.stringify(newPathIndices))
 
 		this.renderTreeLevel_(
 			childContainer,
@@ -177,6 +188,10 @@ export class PluginView implements View {
 		const optionElem = doc.createElement('div')
 		optionElem.classList.add(className('option'))
 		optionElem.textContent = option.label
+
+		// Expose stable data attributes for tests
+		optionElem.setAttribute('data-tree-option', String(option.label))
+		optionElem.setAttribute('data-tree-path', JSON.stringify([...pathIndices, index]))
 
 		optionElem.addEventListener('click', () => {
 			const newPathIndices = [...pathIndices, index]
