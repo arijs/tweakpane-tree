@@ -59,6 +59,9 @@ export class PluginView implements View {
 		// Build the tree
 		this.buildTree_()
 
+		// Reflect initial value selection visually
+		this.onValueChange_()
+
 		config.viewProps.handleDispose(() => {
 			// Called when the view is disposing
 		})
@@ -203,7 +206,24 @@ export class PluginView implements View {
 	}
 
 	private onValueChange_(): void {
-		// Could update visual selection state here if needed
-		// For now, we'll keep it simple
+		// Update visual selection state based on the bound value.
+		// Clear previous selection markers
+		const doc = this.element.ownerDocument
+		this.element.querySelectorAll('[data-tree-selected="true"]').forEach((el) => {
+			el.removeAttribute('data-tree-selected')
+		})
+
+		const raw = this.value_.rawValue
+		if (!raw || !Array.isArray(raw.treePathIndices)) {
+			return
+		}
+
+		const pathStr = JSON.stringify(raw.treePathIndices)
+		// Find the element with matching data-tree-path attribute and mark it
+		const selector = `[data-tree-path='${pathStr}']`
+		const el = this.element.querySelector(selector) as HTMLElement | null
+		if (el) {
+			el.setAttribute('data-tree-selected', 'true')
+		}
 	}
 }

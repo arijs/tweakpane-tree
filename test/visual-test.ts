@@ -11,6 +11,34 @@ import looksSame, { type LooksSameResult } from 'looks-same'
 
 // process.exit(1)
 
+const screenStepList = [
+	'sInitial',
+	'sHoverSummary',
+	'sExpandedHover',
+	'sExpanded',
+	'sHoverItem',
+	'sSelectedHover',
+	'sSelected',
+	'sCondensed',
+	'sSelectedOther',
+] as const
+
+type ScreenStepKey = typeof screenStepList[number]
+
+type ScreenStepMap<T> = {
+	[key in ScreenStepKey]: T
+}
+
+type ScreenStepMapPath = ScreenStepMap<string>
+
+type ScreenStepMapHash = ScreenStepMap<{
+	sha256: string | undefined,
+} | undefined>
+
+type ScreenStepDiffResult = ScreenStepMap<
+	Omit<LooksSameResult, 'diffImage'> | undefined
+>
+
 const rePathSepEnd = sep === '\\' ? /[\\]+$/ : /[\/]+$/
 
 const __dirname = fileURLToPath(new URL('..', import.meta.url)).replace(rePathSepEnd, '')
@@ -161,75 +189,81 @@ function waitForTimeout(page: Page, ms: number) {
 // 	}
 // }
 
-const screenStepList = ['sInitial', 'sHover', 'sExpanded', 'sCondensed', 'sSelected'] as const
-
-type ScreenStepKey = typeof screenStepList[number]
-
-type ScreenStepMap<T> = {
-	[key in ScreenStepKey]: T
-}
-
-type ScreenStepMapPath = ScreenStepMap<string>
-
-type ScreenStepMapHash = ScreenStepMap<{
-	sha256: string | undefined,
-} | undefined>
-
-type ScreenStepDiffResult = ScreenStepMap<
-	Omit<LooksSameResult, 'diffImage'> | undefined
->
-
 async function getPage(name: string, path: string) {
 	const slug = name.toLowerCase().replace(/\W+/g, '-')
 
 	const screenPathsSaved: ScreenStepMapPath = {
-		sInitial: getScreenPath(slug),
-		sHover: getScreenPath(slug, 'hover'),
-		sExpanded: getScreenPath(slug, 'expanded'),
-		sCondensed: getScreenPath(slug, 'condensed'),
-		sSelected: getScreenPath(slug, 'selected'),
+		sInitial: getScreenPath(slug, '00'),
+		sHoverSummary: getScreenPath(slug, '01-hover-summary'),
+		sExpandedHover: getScreenPath(slug, '02-expanded-hover'),
+		sExpanded: getScreenPath(slug, '03-expanded'),
+		sHoverItem: getScreenPath(slug, '04-hover-item'),
+		sSelectedHover: getScreenPath(slug, '05-selected-hover'),
+		sSelected: getScreenPath(slug, '06-selected'),
+		sCondensed: getScreenPath(slug, '07-condensed'),
+		sSelectedOther: getScreenPath(slug, '08-selected-other'),
 	}
 
 	const screenPathsNew: ScreenStepMapPath = {
-		sInitial: getScreenPath(slug, '-new'),
-		sHover: getScreenPath(slug, 'hover-new'),
-		sExpanded: getScreenPath(slug, 'expanded-new'),
-		sCondensed: getScreenPath(slug, 'condensed-new'),
-		sSelected: getScreenPath(slug, 'selected-new'),
+		sInitial: getScreenPath(slug, '00-new'),
+		sHoverSummary: getScreenPath(slug, '01-hover-summary-new'),
+		sExpandedHover: getScreenPath(slug, '02-expanded-hover-new'),
+		sExpanded: getScreenPath(slug, '03-expanded-new'),
+		sHoverItem: getScreenPath(slug, '04-hover-item-new'),
+		sSelectedHover: getScreenPath(slug, '05-selected-hover-new'),
+		sSelected: getScreenPath(slug, '06-selected-new'),
+		sCondensed: getScreenPath(slug, '07-condensed-new'),
+		sSelectedOther: getScreenPath(slug, '08-selected-other-new'),
 	}
 
 	const screenPathsDiff: ScreenStepMapPath = {
-		sInitial: getScreenPath(slug, '-diff'),
-		sHover: getScreenPath(slug, 'hover-diff'),
-		sExpanded: getScreenPath(slug, 'expanded-diff'),
-		sCondensed: getScreenPath(slug, 'condensed-diff'),
-		sSelected: getScreenPath(slug, 'selected-diff'),
+		sInitial: getScreenPath(slug, '00-diff'),
+		sHoverSummary: getScreenPath(slug, '01-hover-summary-diff'),
+		sExpandedHover: getScreenPath(slug, '02-expanded-hover-diff'),
+		sExpanded: getScreenPath(slug, '03-expanded-diff'),
+		sHoverItem: getScreenPath(slug, '04-hover-item-diff'),
+		sSelectedHover: getScreenPath(slug, '05-selected-hover-diff'),
+		sSelected: getScreenPath(slug, '06-selected-diff'),
+		sCondensed: getScreenPath(slug, '07-condensed-diff'),
+		sSelectedOther: getScreenPath(slug, '08-selected-other-diff'),
 	}
 
 	const screenHashesSaved: ScreenStepMapHash = {
 		sInitial: await hashFile(screenPathsSaved.sInitial),
-		sHover: await hashFile(screenPathsSaved.sHover),
+		sHoverSummary: await hashFile(screenPathsSaved.sHoverSummary),
+		sExpandedHover: await hashFile(screenPathsSaved.sExpandedHover),
 		sExpanded: await hashFile(screenPathsSaved.sExpanded),
-		sCondensed: await hashFile(screenPathsSaved.sCondensed),
+		sHoverItem: await hashFile(screenPathsSaved.sHoverItem),
+		sSelectedHover: await hashFile(screenPathsSaved.sSelectedHover),
 		sSelected: await hashFile(screenPathsSaved.sSelected),
+		sCondensed: await hashFile(screenPathsSaved.sCondensed),
+		sSelectedOther: await hashFile(screenPathsSaved.sSelectedOther),
 	}
 
 	const screenHashesNew: ScreenStepMapHash = {
 		sInitial: undefined,
-		sHover: undefined,
+		sHoverSummary: undefined,
+		sExpandedHover: undefined,
 		sExpanded: undefined,
-		sCondensed: undefined,
+		sHoverItem: undefined,
+		sSelectedHover: undefined,
 		sSelected: undefined,
+		sCondensed: undefined,
+		sSelectedOther: undefined,
 	}
 
 	const screenErrors: any[] = []
 
 	const screenDiff: ScreenStepDiffResult = {
 		sInitial: undefined,
-		sHover: undefined,
+		sHoverSummary: undefined,
+		sExpandedHover: undefined,
 		sExpanded: undefined,
-		sCondensed: undefined,
+		sHoverItem: undefined,
+		sSelectedHover: undefined,
 		sSelected: undefined,
+		sCondensed: undefined,
+		sSelectedOther: undefined,
 	}
 
 	return {
@@ -318,6 +352,22 @@ async function testState(testPage: TestPage, sKey: ScreenStepKey, label: string,
 	await compareHash(testPage, sKey, logger, `screenshot (${testPage.name} ${label})`)
 }
 
+async function pageGetSelector(page: Page, selector: string): Promise<ElementHandle<Element> | null> {
+	const element = await page.$(selector)
+	const isVisible = element
+		? await page.evaluate((el) => {
+			return el.checkVisibility()
+		}, element)
+		: null
+	logger.log(`pageGetSelector <${selector}>`, {element, isVisible})
+	if (!element) {
+		throw new Error(`Element not found for selector: ${selector}`)
+	} else if (!isVisible) {
+		throw new Error(`Element not visible for selector: ${selector}`)
+	}
+	return element
+}
+
 async function testPage(browser: Browser, testPage: TestPage) {
 
 	const browserCtx = await browser.createBrowserContext()
@@ -333,20 +383,76 @@ async function testPage(browser: Browser, testPage: TestPage) {
 
 	await testState(testPage, 'sInitial', 'initial', page)
 
+	// Hover over a group (e.g. 'Colors') to capture hover state
+	{
+		let colorsSummary: ElementHandle<Element> | null = null
+		try {
+			// colorsSummary = await page.waitForSelector('[data-tree-summary="Colors"]', { timeout: 2000 })
+			colorsSummary = await pageGetSelector(page, '[data-tree-summary="Colors"]')
+			if (colorsSummary) {
+				await colorsSummary.hover()
+				// await waitForTimeout(page, 200)
+				logger.log(`wait 500 ms after hovering colors summary`)
+				await new Promise(resolve => setTimeout(resolve, 500))
+				await testState(testPage, 'sHoverSummary', 'hover colors summary', page)
+			} else {
+				logger.log(`hover target not found, skipping sHover`)
+			}
+		} catch (e) {
+			logger.error('error during hover step', e)
+		} finally {
+			colorsSummary?.dispose()
+		}
+	}
+
 	// Expand a group (click the 'Colors' summary)
 	{
 		let colorsSummary: ElementHandle<Element> | null = null
 		try {
-			colorsSummary = await page.waitForSelector('[data-tree-summary="Colors"]', { timeout: 2000 })
+			logger.log(`wait 500 ms after initial test`)
+			await new Promise(resolve => setTimeout(resolve, 500))
+
+			// const colorsSummaryTest = await page.$('[data-tree-summary="Colors"]')
+			// const colorsSummaryVisible = await page.evaluate((el) => {
+			// 	return el?.checkVisibility()
+			// }, colorsSummaryTest)
+			// logger.log(`colorsSummaryTest:`, {colorsSummaryTest, colorsSummaryVisible})
+
+			// colorsSummary = await page.waitForSelector('[data-tree-summary="Colors"]', { timeout: 2000 })
+			colorsSummary = await pageGetSelector(page, '[data-tree-summary="Colors"]')
 			if (colorsSummary) {
 				await colorsSummary.click()
-				await waitForTimeout(page, 300)
-				await testState(testPage, 'sExpanded', 'expanded', page)
+				// await waitForTimeout(page, 300)
+				logger.log(`wait 500 ms after clicking colors summary`)
+				await new Promise(resolve => setTimeout(resolve, 500))
+				await testState(testPage, 'sExpandedHover', 'expanded hover colors summary', page)
 			} else {
-				logger.log(`expand target not found, skipping sExpanded`)
+				logger.log(`expand target not found, skipping sExpandedHover`)
 			}
 		} catch (e) {
 			logger.error('error during expand step', e)
+		} finally {
+			colorsSummary?.dispose()
+		}
+	}
+
+	// Hover off the expanded group ('Colors') to capture neutral state
+	{
+		let colorsSummary: ElementHandle<Element> | null = null
+		try {
+			// colorsSummary = await page.waitForSelector('[data-tree-summary="Colors"]', { timeout: 2000 })
+			colorsSummary = await pageGetSelector(page, '[data-tree-summary="Colors"]')
+			if (colorsSummary) {
+				await page.mouse.move(0, 0)
+				// await waitForTimeout(page, 200)
+				logger.log(`wait 500 ms after moving mouse away from colors summary`)
+				await new Promise(resolve => setTimeout(resolve, 500))
+				await testState(testPage, 'sExpanded', 'neutral colors summary', page)
+			} else {
+				logger.log(`expanded target not found, skipping sExpanded`)
+			}
+		} catch (e) {
+			logger.error('error during moving mouse away from colors summary step', e)
 		} finally {
 			colorsSummary?.dispose()
 		}
@@ -356,18 +462,65 @@ async function testPage(browser: Browser, testPage: TestPage) {
 	{
 		let redElem: ElementHandle<Element> | null = null
 		try {
-			redElem = await page.waitForSelector('[data-tree-option="Red"]', { timeout: 2000 })
+			// redElem = await page.waitForSelector('[data-tree-option="Red"]', { timeout: 2000 })
+			redElem = await pageGetSelector(page, '[data-tree-option="Red"]')
 			if (redElem) {
 				await redElem.hover()
-				await waitForTimeout(page, 200)
-				await testState(testPage, 'sHover', 'hover', page)
+				// await waitForTimeout(page, 200)
+				logger.log(`wait 500 ms after hovering red element`)
+				await new Promise(resolve => setTimeout(resolve, 500))
+				await testState(testPage, 'sHoverItem', 'hover red element', page)
 			} else {
-				logger.log(`hover target not found, skipping sHover`)
+				logger.log(`hover target not found, skipping sHoverItem`)
 			}
 		} catch (e) {
-			logger.error('error during hover step', e)
+			logger.error('error during hover red item step', e)
 		} finally {
 			redElem?.dispose()
+		}
+	}
+
+	// Select an item (e.g. 'Green') to capture selected state with mouse over
+	{
+		let greenElem: ElementHandle<Element> | null = null
+		try {
+			// greenElem = await page.waitForSelector('[data-tree-option="Green"]', { timeout: 2000 })
+			greenElem = await pageGetSelector(page, '[data-tree-option="Green"]')
+			if (greenElem) {
+				await greenElem.click()
+				// await waitForTimeout(page, 200)
+				logger.log(`wait 500 ms after clicking green element to select`)
+				await new Promise(resolve => setTimeout(resolve, 500))
+				await testState(testPage, 'sSelectedHover', 'selected hover green', page)
+			} else {
+				logger.log(`select target not found, skipping sSelectedHover`)
+			}
+		} catch (e) {
+			logger.error('error during selection step', e)
+		} finally {
+			greenElem?.dispose()
+		}
+	}
+
+	// Hover off the item ('Green') to capture neutral selected state
+	{
+		let greenElem: ElementHandle<Element> | null = null
+		try {
+			// greenElem = await page.waitForSelector('[data-tree-option="Green"]', { timeout: 2000 })
+			greenElem = await pageGetSelector(page, '[data-tree-option="Green"]')
+			if (greenElem) {
+				await page.mouse.move(0, 0)
+				// await waitForTimeout(page, 200)
+				logger.log(`wait 500 ms after moving mouse away from green element`)
+				await new Promise(resolve => setTimeout(resolve, 500))
+				await testState(testPage, 'sSelected', 'selected neutral green', page)
+			} else {
+				logger.log(`select target not found, skipping sSelected`)
+			}
+		} catch (e) {
+			logger.error('error during selection step', e)
+		} finally {
+			greenElem?.dispose()
 		}
 	}
 
@@ -375,10 +528,14 @@ async function testPage(browser: Browser, testPage: TestPage) {
 	{
 		let colorsSummary2: ElementHandle<Element> | null = null
 		try {
-			colorsSummary2 = await page.waitForSelector('[data-tree-summary="Colors"]', { timeout: 2000 })
+			// colorsSummary2 = await page.waitForSelector('[data-tree-summary="Colors"]', { timeout: 2000 })
+			colorsSummary2 = await pageGetSelector(page, '[data-tree-summary="Colors"]')
 			if (colorsSummary2) {
 				await colorsSummary2.click()
-				await waitForTimeout(page, 300)
+				await page.mouse.move(0, 0)
+				// await waitForTimeout(page, 300)
+				logger.log(`wait 500 ms after clicking colors summary to condense`)
+				await new Promise(resolve => setTimeout(resolve, 500))
 				await testState(testPage, 'sCondensed', 'condensed', page)
 			}
 		} catch (e) {
@@ -388,36 +545,45 @@ async function testPage(browser: Browser, testPage: TestPage) {
 		}
 	}
 
-	// Re-open and select an item (e.g. 'Green')
+	// Re-open and select another item (e.g. 'Blue')
 	{
 		let colorsSummary3: ElementHandle<Element> | null = null
 		try {
-			colorsSummary3 = await page.waitForSelector('[data-tree-summary="Colors"]', { timeout: 2000 })
+			// colorsSummary3 = await page.waitForSelector('[data-tree-summary="Colors"]', { timeout: 2000 })
+			colorsSummary3 = await pageGetSelector(page, '[data-tree-summary="Colors"]')
 			if (colorsSummary3) {
 				await colorsSummary3.click()
-				await waitForTimeout(page, 300)
+				// await waitForTimeout(page, 300)
+				logger.log(`wait 500 ms after clicking colors summary to re-open`)
+				await new Promise(resolve => setTimeout(resolve, 500))
+
+				// Select an item ('Blue') to capture selected state with mouse over
 				{
-					let greenElem: ElementHandle<Element> | null = null
+					let blueElem: ElementHandle<Element> | null = null
 					try {
-						greenElem = await page.waitForSelector('[data-tree-option="Green"]', { timeout: 2000 })
-						if (greenElem) {
-							await greenElem.click()
-							await waitForTimeout(page, 200)
-							await testState(testPage, 'sSelected', 'selected', page)
+						// blueElem = await page.waitForSelector('[data-tree-option="Blue"]', { timeout: 2000 })
+						blueElem = await pageGetSelector(page, '[data-tree-option="Blue"]')
+						if (blueElem) {
+							await blueElem.click()
+							await page.mouse.move(0, 0)
+							// await waitForTimeout(page, 200)
+							logger.log(`wait 500 ms after clicking blue element to select`)
+							await new Promise(resolve => setTimeout(resolve, 500))
+							await testState(testPage, 'sSelectedOther', 'selected other item blue', page)
 						} else {
-							logger.log(`select target not found, skipping sSelected`)
+							logger.log(`select target not found, skipping sSelectedOther`)
 						}
 					} catch (e) {
-						logger.error('error during selection step', e)
+						logger.error('error during other selection step (selecting blue)', e)
 					} finally {
-						greenElem?.dispose()
+						blueElem?.dispose()
 					}
 				}
 			} else {
-				logger.log(`re-open target not found, skipping selection flow`)
+				logger.log(`re-open target not found, skipping other selection flow`)
 			}
 		} catch (e) {
-			logger.error('error during selection step', e)
+			logger.error('error during other selection step (reopening Colors group)', e)
 		} finally {
 			colorsSummary3?.dispose()
 		}

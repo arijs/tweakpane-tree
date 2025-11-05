@@ -4,12 +4,14 @@
 // Additional style for the tree plugin
 .#{tp.$prefix}-treev {
 	// Extend a general input view style
-	@extend %tp-input;
+	@extend %tp-theming;
 
+	background-color: tp.cssVar('input-bg');
 	cursor: default;
 	// Remove fixed min-height, let the tree determine the height
 	height: auto;
 	position: relative;
+	border-radius: tp.cssVar('base-border-radius');
 
 	&.#{tp.$prefix}-v-disabled {
 		opacity: 0.5;
@@ -27,14 +29,18 @@
 
 	// Summary element for tree nodes
 	&_summary {
+		// background-color: tp.cssVar('input-bg');
 		color: tp.cssVar('input-fg');
 		cursor: pointer;
 		list-style: none;
 		padding: 4px 8px;
 		user-select: none;
 
+		// Hover state: use a hovered background and invert text/background to
+		// ensure good contrast in both light/dark themes.
 		&:hover {
-			background-color: tp.cssVar('button-bg-hover');
+			background-color: tp.cssVar('input-bg-hover');
+			color: tp.cssVar('input-fg');
 		}
 
 		// Hide default disclosure triangle
@@ -57,11 +63,15 @@
 	}
 
 	// Selectable summary (node with value)
-	&_summary#{&}_selectable {
-		&:hover {
-			background-color: tp.cssVar('button-bg-active');
-		}
-	}
+		// Selectable summaries receive a distinct hover (stronger) state.
+		// Use the data attribute that the view exposes to match summaries reliably.
+		// & [data-tree-summary].#{tp.$prefix}-selectable,
+		// & [data-tree-summary][data-tree-summary] {
+		// 	&:hover {
+		// 		background-color: tp.cssVar('button-bg-active');
+		// 		color: tp.cssVar('input-bg');
+		// 	}
+		// }
 
 	// Children container
 	&_children {
@@ -70,17 +80,36 @@
 
 	// Leaf option
 	&_option {
+		// background-color: tp.cssVar('input-bg');
 		color: tp.cssVar('input-fg');
 		cursor: pointer;
 		padding: 4px 8px;
 		user-select: none;
 
-		&:hover {
-			background-color: tp.cssVar('button-bg-hover');
+			&:hover {
+				background-color: tp.cssVar('input-bg-hover');
+				color: tp.cssVar('input-fg');
+			}
+
+			&:active {
+				background-color: tp.cssVar('input-bg-active');
+				color: tp.cssVar('input-fg');
+			}
+	}
+
+		// Selected state: view marks the selected element with
+		// `[data-tree-selected="true"]` (set in view.ts). Provide a clear
+		// selected background and a contrasting text color.
+		& [data-tree-selected="true"] {
+			background-color: tp.cssVar('input-bg-active');
+			color: tp.cssVar('input-fg');
+			// border-left: 3px solid tp.cssVar('accent');
+			// padding-left: 6px; // accommodate the left border
 		}
 
-		&:active {
-			background-color: tp.cssVar('button-bg-active');
+		& [data-tree-selected="true"]:hover {
+			// Keep the selected background stable on hover to avoid contrast issues
+			background-color: tp.cssVar('input-bg-active');
+			color: tp.cssVar('input-fg');
 		}
-	}
 }
