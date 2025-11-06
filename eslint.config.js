@@ -2,6 +2,7 @@ import tsPlugin from '@typescript-eslint/eslint-plugin'
 import tsParser from '@typescript-eslint/parser'
 import prettierPlugin from 'eslint-plugin-prettier'
 import simpleImportSort from 'eslint-plugin-simple-import-sort'
+import {fileURLToPath} from 'url'
 
 // Merge recommended rules from the TypeScript plugin when available so the
 // flat config behaves similarly to `extends: ['plugin:@typescript-eslint/recommended']`.
@@ -47,7 +48,7 @@ export default [
 			parser: tsParser,
 			parserOptions: {
 				project: './src/tsconfig.json',
-				tsconfigRootDir: new URL('.', import.meta.url).pathname,
+				tsconfigRootDir: fileURLToPath(new URL('.', import.meta.url)),
 				sourceType: 'module',
 			},
 		},

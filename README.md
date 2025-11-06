@@ -8,6 +8,7 @@ A tree input plugin for [Tweakpane](https://tweakpane.github.io/docs/) that allo
 - **Native HTML Elements**: Uses `<details>` and `<summary>` elements for native expand/collapse behavior
 - **Type-Safe**: Fully typed TypeScript implementation
 - **Path Tracking**: Returns complete path information including indices, values, and leaf value
+- **Dynamic trees & DOM diffing**: The view attempts to reuse existing DOM elements when rebuilding the tree to reduce reflows and preserve element identity — see `docs/dynamic-trees.md` for details.
 
 ## Installation
 

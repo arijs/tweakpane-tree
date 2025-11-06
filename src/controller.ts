@@ -48,10 +48,18 @@ export class PluginController implements Controller<PluginView> {
 		leafValue: unknown,
 	): void {
 		// Update the value when user selects an item
-		this.value.rawValue = {
+		// Preserve an existing dynamic `tree` property when present on the
+		// bound raw value so selecting an item doesn't drop the tree data.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const currentRaw = this.value.rawValue as any
+		const newRaw: any = {
 			treePathIndices: pathIndices,
 			treePathValues: pathValues,
 			leafValue: leafValue,
 		}
+		if (currentRaw && Array.isArray(currentRaw.tree)) {
+			newRaw.tree = currentRaw.tree
+		}
+		this.value.rawValue = newRaw
 	}
 }

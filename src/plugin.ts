@@ -30,10 +30,15 @@ export interface TreeValue {
 	treePathIndices: number[]
 	treePathValues: unknown[]
 	leafValue: unknown
+	// Optional dynamic tree definition. If provided, use this to render the tree
+	// instead of the static `children` from params.
+	tree?: TreeChildren | undefined
 }
 
 export interface PluginInputParams extends BaseInputParams {
-	children: TreeChildren
+	// `children` may be omitted when the bound `TreeValue` already supplies
+	// a dynamic `tree` property.
+	children?: TreeChildren
 	view: 'tree'
 	maxHeight?: string | undefined
 }
@@ -79,21 +84,38 @@ export const TreeInputPlugin: InputBindingPlugin<
 			return null
 		}
 
-		// Validate children parameter manually
-		if (!params.children || !Array.isArray(params.children)) {
-			return null
-		}
+		// If the external value doesn't provide a dynamic tree, ensure the
+		// params include `children`. If the external value includes `tree`
+		// we accept params without `children`.
+		const exVal = exValue as TreeValue
+		const hasDynamicTree =
+			typeof exVal === 'object' &&
+			exVal !== null &&
+			'tree' in exVal &&
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			Array.isArray((exVal as any).tree)
 
 		// Parse parameters object
 		const result = parseRecord<PluginInputParams>(params, (p) => ({
 			// `view` option may be useful to provide a custom control for primitive values
 			view: p.required.constant('tree'),
-			children: p.required.custom<TreeChildren>(() => {
+			// children is optional here; we'll validate presence below when
+			// the external value doesn't provide a dynamic tree.
+			children: p.optional.custom<TreeChildren>(() => {
 				return params.children as TreeChildren
 			}),
 			maxHeight: p.optional.string,
 		}))
 		if (!result) {
+			return null
+		}
+
+		// If there's no dynamic tree on the external value, ensure params
+		// provided `children`.
+		if (
+			!hasDynamicTree &&
+			(!result.children || !Array.isArray(result.children))
+		) {
 			return null
 		}
 
@@ -121,6 +143,13 @@ export const TreeInputPlugin: InputBindingPlugin<
 							: [],
 						treePathValues: [],
 						leafValue: undefined,
+						// carry through a dynamic tree when present so the
+						// controller can render it
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						tree: Array.isArray((value as any).tree)
+							? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+								[...(value as any).tree]
+							: undefined,
 					}
 				}
 				return {
@@ -138,22 +167,36 @@ export const TreeInputPlugin: InputBindingPlugin<
 
 		writer(_args) {
 			return (target: BindingTarget, inValue: TreeValue) => {
-				// Write all three properties to the target
-				target.write({
+				// Write all properties to the target. Include `tree` only when
+				// present on the internal value.
+				const out: Record<string, unknown> = {
 					treePathIndices: [...inValue.treePathIndices],
 					treePathValues: [...inValue.treePathValues],
 					leafValue: inValue.leafValue,
-				})
+				}
+				if (inValue.tree !== undefined) {
+					out.tree = Array.isArray(inValue.tree)
+						? [...inValue.tree]
+						: inValue.tree
+				}
+				target.write(out)
 			}
 		},
 	},
 
 	controller(args) {
-		// Create a controller for the plugin
+		// Create a controller for the plugin. If the bound value supplies a
+		// dynamic `tree`, use it; otherwise fall back to the parsed params.
+		// Try to read a dynamic tree from the current bound value's rawValue
+		// (Value<T> exposes the current raw value as `rawValue`). Use `any`
+		// here to avoid a type mismatch with the Value<T> wrapper.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const dynamicTree = (args.value as any)?.rawValue?.tree
+		const children = dynamicTree ?? args.params.children
 		return new PluginController(args.document, {
 			value: args.value,
 			viewProps: args.viewProps,
-			children: args.params.children,
+			children: children as TreeChildren,
 			maxHeight: args.params.maxHeight,
 		})
 	},

@@ -18,14 +18,18 @@
 </head>
 <body>
 	<h1>Tweakpane Tree Plugin Test</h1>
-	<div id="pane-container" style="--tp-blade-value-width: auto;"></div>
-	<div id="info">
-		<h3>Current Value:</h3>
-		<pre id="value-display"></pre>
+	<div id="tabs">
+		<button id="tab-static" aria-pressed="true">Static Tree</button>
+		<button id="tab-dynamic" aria-pressed="false">Dynamic Tree</button>
+	</div>
+
+	<div id="tab-contents">
+		<div id="pane-static" class="tab-content" style="display: block; --tp-blade-value-width: auto;"></div>
+		<div id="pane-dynamic" class="tab-content" style="display: none; --tp-blade-value-width: auto;"></div>
 	</div>
 
 	<script type="module">
-		import {Pane} from '../node_modules/@arijs/tweakpane/dist/tweakpane.min.js';
+		import {Pane} from '../node_modules/@arijs/tweakpane/dist/tweakpane.js';
 		import * as TweakpaneTreePlugin from '../dist/arijs-tweakpane-plugin-tree.js';
 
 		const params = {
@@ -36,92 +40,304 @@
 			}
 		};
 
-		const pane = new Pane({
-			container: document.getElementById('pane-container')
+		// Static pane (existing content)
+		const paneStatic = new Pane({
+			container: document.getElementById('pane-static')
 		});
 
 		// Register plugin
-		pane.registerPlugin(TweakpaneTreePlugin);
+		paneStatic.registerPlugin(TweakpaneTreePlugin);
 
 		// Add tree binding with sample data
-		const treeApi = pane.addBinding(params, 'selectedItem', {
+		const staticChildren = [
+			{
+				label: 'Colors',
+				children: [
+					{ label: 'Red', value: '#ff0000' },
+					{ label: 'Green', value: '#00ff00' },
+					{ label: 'Blue', value: '#0000ff' },
+					{ label: 'Yellow', value: '#ffff00' },
+					{ label: 'Cyan', value: '#00ffff' },
+					{ label: 'Magenta', value: '#ff00ff' },
+					{
+						label: 'Light Colors',
+						children: [
+							{ label: 'Light Red', value: '#ffcccc' },
+							{ label: 'Light Green', value: '#ccffcc' },
+							{ label: 'Light Blue', value: '#ccccff' },
+							{ label: 'Light Yellow', value: '#ffffcc' },
+							{ label: 'Light Cyan', value: '#ccffff' },
+							{ label: 'Light Magenta', value: '#ffccff' }
+						]
+					},
+					{
+						label: 'Dark Colors',
+						children: [
+							{ label: 'Dark Red', value: '#880000' },
+							{ label: 'Dark Green', value: '#008800' },
+							{ label: 'Dark Blue', value: '#000088' }
+						]
+					}
+				]
+			},
+			{
+				label: 'Sizes',
+				children: [
+					{ label: 'Extra Small', value: 5 },
+					{ label: 'Small', value: 10 },
+					{ label: 'Medium', value: 20 },
+					{ label: 'Large', value: 30 },
+					{ label: 'Extra Large', value: 40 },
+					{
+						label: 'Custom Sizes',
+						children: [
+							{ label: 'Tiny', value: 2 },
+							{ label: 'Mini', value: 8 },
+							{ label: 'Huge', value: 50 },
+							{ label: 'Gigantic', value: 100 }
+						]
+					}
+				]
+			},
+			{
+				label: 'Fonts',
+				children: [
+					{ label: 'Arial', value: 'Arial' },
+					{ label: 'Times New Roman', value: 'Times New Roman' },
+					{ label: 'Courier New', value: 'Courier New' },
+					{ label: 'Georgia', value: 'Georgia' },
+					{ label: 'Verdana', value: 'Verdana' }
+				]
+			},
+			{
+				label: 'Standalone Option Long Long Long Long Long Looooooooooooooooooooooooooooooooooong label',
+				value: 'standalone'
+			}
+		]
+
+		// Build a small control panel below the static pane to mirror the dynamic pane
+		const staticControls = document.createElement('div')
+		staticControls.style.marginTop = '8px'
+		staticControls.innerHTML = `
+			<pre id="static-value-display" style="margin-top:8px"></pre>
+		`
+		document.getElementById('pane-static').appendChild(staticControls)
+
+		// Keep static display in sync
+		document.getElementById('static-value-display').textContent = JSON.stringify(params.selectedItem, null, 2)
+
+		const treeApiStatic = paneStatic.addBinding(params, 'selectedItem', {
 			view: 'tree',
 			maxHeight: `min(calc(100vh - 6em), 100em)`, // Limit height to 100em with scrolling
-			children: [
-				{
-					label: 'Colors',
-					children: [
-						{ label: 'Red', value: '#ff0000' },
-						{ label: 'Green', value: '#00ff00' },
-						{ label: 'Blue', value: '#0000ff' },
-						{ label: 'Yellow', value: '#ffff00' },
-						{ label: 'Cyan', value: '#00ffff' },
-						{ label: 'Magenta', value: '#ff00ff' },
-						{
-							label: 'Light Colors',
-							children: [
-								{ label: 'Light Red', value: '#ffcccc' },
-								{ label: 'Light Green', value: '#ccffcc' },
-								{ label: 'Light Blue', value: '#ccccff' },
-								{ label: 'Light Yellow', value: '#ffffcc' },
-								{ label: 'Light Cyan', value: '#ccffff' },
-								{ label: 'Light Magenta', value: '#ffccff' }
-							]
-						},
-						{
-							label: 'Dark Colors',
-							children: [
-								{ label: 'Dark Red', value: '#880000' },
-								{ label: 'Dark Green', value: '#008800' },
-								{ label: 'Dark Blue', value: '#000088' }
-							]
-						}
-					]
-				},
-				{
-					label: 'Sizes',
-					children: [
-						{ label: 'Extra Small', value: 5 },
-						{ label: 'Small', value: 10 },
-						{ label: 'Medium', value: 20 },
-						{ label: 'Large', value: 30 },
-						{ label: 'Extra Large', value: 40 },
-						{
-							label: 'Custom Sizes',
-							children: [
-								{ label: 'Tiny', value: 2 },
-								{ label: 'Mini', value: 8 },
-								{ label: 'Huge', value: 50 },
-								{ label: 'Gigantic', value: 100 }
-							]
-						}
-					]
-				},
-				{
-					label: 'Fonts',
-					children: [
-						{ label: 'Arial', value: 'Arial' },
-						{ label: 'Times New Roman', value: 'Times New Roman' },
-						{ label: 'Courier New', value: 'Courier New' },
-						{ label: 'Georgia', value: 'Georgia' },
-						{ label: 'Verdana', value: 'Verdana' }
-					]
-				},
-				{
-					label: 'Standalone Option Long Long Long Long Long Looooooooooooooooooooooooooooooooooong label',
-					value: 'standalone'
-				}
-			]
+			children: staticChildren
 		}).on('change', (ev) => {
 			console.log('Tree value changed:', ev.value);
-			document.getElementById('value-display').textContent = JSON.stringify(ev.value, null, 2);
+			document.getElementById('static-value-display').textContent = JSON.stringify(ev.value, null, 2);
+			Object.assign(params.selectedItem, ev.value)
 		});
 
 		// Initialize display
-		document.getElementById('value-display').textContent = JSON.stringify(params.selectedItem, null, 2);
+		document.getElementById('static-value-display').textContent = JSON.stringify(params.selectedItem, null, 2);
 
-		window.pane = pane;
-		window.treeApi = treeApi;
+		window.paneStatic = paneStatic;
+		window.treeApiStatic = treeApiStatic;
+
+		// --- Dynamic tree pane -------------------------------------------------
+		// Initial dynamic tree data (starts with a small set)
+		const dynamicParams = {
+			selectedItem: {
+				treePathIndices: [],
+				treePathValues: [],
+				leafValue: undefined,
+				// The special `tree` property is read by the plugin's view
+				tree: [
+					{ label: 'Animals', children: [ { label: 'Dog', value: 'dog' }, { label: 'Cat', value: 'cat' } ] },
+					{ label: 'Plants', children: [ { label: 'Tree', value: 'tree' } ] },
+				],
+			}
+		}
+
+		const paneDynamic = new Pane({
+			container: document.getElementById('pane-dynamic')
+		})
+		paneDynamic.registerPlugin(TweakpaneTreePlugin)
+
+		const treeApiDynamic = paneDynamic.addBinding(dynamicParams, 'selectedItem', {
+			view: 'tree',
+			maxHeight: `min(calc(100vh - 6em), 100em)`,
+		}).on('change', (ev) => {
+			// Update display and merge value back into our params holder. Use
+			// Object.assign so we don't accidentally drop the `tree` property.
+			document.getElementById('dynamic-value-display').textContent = JSON.stringify(ev.value, null, 2)
+			Object.assign(dynamicParams.selectedItem, ev.value)
+		})
+
+		// Attach to window for debugging
+		window.paneDynamic = paneDynamic
+		window.treeApiDynamic = treeApiDynamic
+
+		// Build a small control panel below the dynamic pane
+		const dynamicControls = document.createElement('div')
+		dynamicControls.style.marginTop = '8px'
+		dynamicControls.innerHTML = `
+			<div style="display:flex;gap:8px;align-items:center">
+				<label>Label: <input id="dyn-label" type="text" style="width:220px"></label>
+				<label>Value: <input id="dyn-value" type="text" style="width:220px"></label>
+			</div>
+			<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+				<button id="insert-before">Insert before selected</button>
+				<button id="append-end">Append to end of tree</button>
+				<button id="insert-child">Insert as child</button>
+				<button id="remove-selected">Remove selected</button>
+				<button id="update-selected">Update selected</button>
+			</div>
+			<pre id="dynamic-value-display" style="margin-top:8px"></pre>
+		`
+		document.getElementById('pane-dynamic').appendChild(dynamicControls)
+
+		// Utility helpers for manipulating the dynamic tree data structure
+		function getTreeRoot() {
+			// Always use our params object as the single source of truth for the
+			// demo. We'll call `paneDynamic.refresh()` after mutations so the binding
+			// reads the updated `tree` array.
+			return dynamicParams.selectedItem.tree
+		}
+
+		/**
+		 * Traverse a tree (array of nodes) following an array of indices.
+		 * Returns { node, parentArr, index } where `node` is the found node
+		 * (or undefined), `parentArr` is the array that contains the node,
+		 * and `index` is the final index in that array (or -1 when none).
+		 */
+		function traverseTree(root, pathIndices) {
+			if (!Array.isArray(root)) return { node: undefined, parentArr: undefined, index: -1 }
+			if (!pathIndices || pathIndices.length === 0) {
+				return { node: undefined, parentArr: root, index: -1 }
+			}
+			let parentArr = root
+			let node = parentArr[pathIndices[0]]
+			for (let i = 1; i < pathIndices.length; i++) {
+				if (!node) return { node: undefined, parentArr, index: -1 }
+				parentArr = node.children = node.children || []
+				node = parentArr[pathIndices[i]]
+			}
+			const lastIdx = pathIndices[pathIndices.length - 1]
+			return { node, parentArr, index: lastIdx }
+		}
+
+		function emitTreeChange() {
+			// Use the documented `refresh()` API to force the pane to re-read
+			// bound parameters. This is simpler and more robust than emitting
+			// events on internal binding objects.
+			try {
+				if (paneDynamic && typeof paneDynamic.refresh === 'function') {
+					paneDynamic.refresh()
+				}
+			} catch (e) {
+				// ignore
+			}
+			// Update the visible JSON snapshot
+			document.getElementById('dynamic-value-display').textContent = JSON.stringify(dynamicParams.selectedItem, null, 2)
+		}
+
+		// NOTE: use traverseTree(getTreeRoot(), pathIndices) instead of the
+		// previous findParentArrayAndIndex helper. traverseTree returns the
+		// parent array as `parentArr` and the final `index`.
+
+		// Button handlers
+		document.getElementById('insert-before').addEventListener('click', () => {
+			const label = /** @type {HTMLInputElement} */ (document.getElementById('dyn-label')).value || 'New'
+			const value = /** @type {HTMLInputElement} */ (document.getElementById('dyn-value')).value || undefined
+			const sel = dynamicParams.selectedItem.treePathIndices
+			const { parentArr, index } = traverseTree(getTreeRoot(), sel)
+			const node = value === undefined || value === '' ? { label, children: [] } : { label, value }
+			if (index >= 0) {
+				parentArr.splice(index, 0, node)
+			} else {
+				parentArr.unshift(node)
+			}
+			emitTreeChange()
+		})
+
+		document.getElementById('append-end').addEventListener('click', () => {
+			const label = /** @type {HTMLInputElement} */ (document.getElementById('dyn-label')).value || 'New'
+			const value = /** @type {HTMLInputElement} */ (document.getElementById('dyn-value')).value || undefined
+			const node = value === undefined || value === '' ? { label, children: [] } : { label, value }
+			const tree = getTreeRoot()
+			tree.push(node)
+			emitTreeChange()
+		})
+
+		document.getElementById('insert-child').addEventListener('click', () => {
+			const label = /** @type {HTMLInputElement} */ (document.getElementById('dyn-label')).value || 'New'
+			const value = /** @type {HTMLInputElement} */ (document.getElementById('dyn-value')).value || undefined
+			const sel = dynamicParams.selectedItem.treePathIndices
+			const tree = getTreeRoot()
+			if (!sel || sel.length === 0) {
+				// append to root
+				tree.push(value === undefined || value === '' ? { label, children: [] } : { label, value })
+			} else {
+				// find selected node using helper
+				const { node } = traverseTree(tree, sel)
+				if (!node) return
+				if (!Array.isArray(node.children)) {
+					node.children = []
+				}
+				node.children.push(value === undefined || value === '' ? { label, children: [] } : { label, value })
+			}
+			emitTreeChange()
+		})
+
+		document.getElementById('remove-selected').addEventListener('click', () => {
+			const sel = dynamicParams.selectedItem.treePathIndices
+			if (!sel || sel.length === 0) return
+			const { parentArr, index } = traverseTree(getTreeRoot(), sel)
+			if (index >= 0) {
+				parentArr.splice(index, 1)
+				// clear selection
+				dynamicParams.selectedItem.treePathIndices = []
+				dynamicParams.selectedItem.treePathValues = []
+				dynamicParams.selectedItem.leafValue = undefined
+				emitTreeChange()
+			}
+		})
+
+		document.getElementById('update-selected').addEventListener('click', () => {
+			const label = /** @type {HTMLInputElement} */ (document.getElementById('dyn-label')).value || 'Updated'
+			const value = /** @type {HTMLInputElement} */ (document.getElementById('dyn-value')).value || undefined
+			const sel = dynamicParams.selectedItem.treePathIndices
+			if (!sel) return
+			const { parentArr, index } = traverseTree(getTreeRoot(), sel)
+			if (index >= 0 && parentArr[index]) {
+				const item = parentArr[index]
+				item.label = label
+				if (value === undefined || value === '') {
+					// treat as node
+					if ('value' in item) delete item.value
+					if (!Array.isArray(item.children)) item.children = []
+				} else {
+					item.value = value
+				}
+				emitTreeChange()
+			}
+		})
+
+		// initialize dynamic display
+		document.getElementById('dynamic-value-display').textContent = JSON.stringify(dynamicParams.selectedItem, null, 2)
+
+		// --- Tabs behavior -----------------------------------------------------
+		document.getElementById('tab-static').addEventListener('click', () => {
+			document.getElementById('pane-static').style.display = 'block'
+			document.getElementById('pane-dynamic').style.display = 'none'
+			document.getElementById('tab-static').setAttribute('aria-pressed', 'true')
+			document.getElementById('tab-dynamic').setAttribute('aria-pressed', 'false')
+		})
+		document.getElementById('tab-dynamic').addEventListener('click', () => {
+			document.getElementById('pane-static').style.display = 'none'
+			document.getElementById('pane-dynamic').style.display = 'block'
+			document.getElementById('tab-static').setAttribute('aria-pressed', 'false')
+			document.getElementById('tab-dynamic').setAttribute('aria-pressed', 'true')
+		})
 	</script>
 </body>
 </html>

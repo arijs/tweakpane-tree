@@ -63,15 +63,15 @@
 	}
 
 	// Selectable summary (node with value)
-		// Selectable summaries receive a distinct hover (stronger) state.
-		// Use the data attribute that the view exposes to match summaries reliably.
-		// & [data-tree-summary].#{tp.$prefix}-selectable,
-		// & [data-tree-summary][data-tree-summary] {
-		// 	&:hover {
-		// 		background-color: tp.cssVar('button-bg-active');
-		// 		color: tp.cssVar('input-bg');
-		// 	}
-		// }
+	// Selectable summaries receive a distinct hover (stronger) state.
+	// Use the data attribute that the view exposes to match summaries reliably.
+	// & [data-tree-summary].#{tp.$prefix}-selectable,
+	// & [data-tree-summary][data-tree-summary] {
+	// 	&:hover {
+	// 		background-color: tp.cssVar('button-bg-active');
+	// 		color: tp.cssVar('input-bg');
+	// 	}
+	// }
 
 	// Children container
 	&_children {
@@ -86,30 +86,30 @@
 		padding: 4px 8px;
 		user-select: none;
 
-			&:hover {
-				background-color: tp.cssVar('input-bg-hover');
-				color: tp.cssVar('input-fg');
-			}
+		&:hover {
+			background-color: tp.cssVar('input-bg-hover');
+			color: tp.cssVar('input-fg');
+		}
 
-			&:active {
-				background-color: tp.cssVar('input-bg-active');
-				color: tp.cssVar('input-fg');
-			}
+		&:active {
+			background-color: tp.cssVar('input-bg-active');
+			color: tp.cssVar('input-fg');
+		}
 	}
 
-		// Selected state: view marks the selected element with
-		// `[data-tree-selected="true"]` (set in view.ts). Provide a clear
-		// selected background and a contrasting text color.
-		& [data-tree-selected="true"] {
-			background-color: tp.cssVar('input-bg-active');
-			color: tp.cssVar('input-fg');
-			// border-left: 3px solid tp.cssVar('accent');
-			// padding-left: 6px; // accommodate the left border
-		}
+	// Selected state: view marks the selected element with
+	// `[data-tree-selected="true"]` (set in view.ts). Provide a clear
+	// selected background and a contrasting text color.
+	& [data-tree-selected='true'] {
+		background-color: tp.cssVar('input-bg-active');
+		color: tp.cssVar('input-fg');
+		// border-left: 3px solid tp.cssVar('accent');
+		// padding-left: 6px; // accommodate the left border
+	}
 
-		& [data-tree-selected="true"]:hover {
-			// Keep the selected background stable on hover to avoid contrast issues
-			background-color: tp.cssVar('input-bg-active');
-			color: tp.cssVar('input-fg');
-		}
+	& [data-tree-selected='true']:hover {
+		// Keep the selected background stable on hover to avoid contrast issues
+		background-color: tp.cssVar('input-bg-active');
+		color: tp.cssVar('input-fg');
+	}
 }

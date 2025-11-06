@@ -12,12 +12,14 @@ This repository implements a Tweakpane input plugin (tree control). The guidance
 - `vite.config.ts` — CSS injection (compiled SASS inlined via a small plugin), build outputs, and dev vs prod flags.
 - `scripts/*` — packaging helpers (`dist-name.js`, `assets-append-version.js`).
 - `test/browser.html` — minimal manual test/visual example used by `npm run start`.
+- `docs/dynamic-trees.md` — notes and examples for dynamic tree updates and the view's DOM-diffing behavior.
 
 ## Big-picture architecture notes
 
 - This is a small single-plugin package. The plugin is implemented using the `InputBindingPlugin` contract from `@arijs/tweakpane-core` (see `createPlugin(...)` in `src/plugin.ts`).
 - Data flow: external bound object (consumer) -> `binding.reader` (reads only `treePathIndices`) -> plugin holds internal `TreeValue` -> user interactions call controller -> controller sets `value.rawValue` -> `binding.writer` writes all three properties back to the consumer.
 - The CSS is compiled from `src/sass/plugin.scss` and inlined into the `css` export by the bundler at build time (see `vite.config.ts`). Do not search for a separate compiled CSS file — it's embedded into the bundle.
+- DOM diffing / dynamic trees: The view implementation now tries to reuse existing DOM nodes when rebuilding the tree (minimizes reflows and preserves element identity). See `docs/dynamic-trees.md` for details and examples when working on `view.ts`.
 
 ## Project-specific conventions
 
