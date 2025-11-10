@@ -1,7 +1,7 @@
 /* eslint-env node */
 
 import Fs from 'fs'
-import Glob from 'glob'
+import {globSync} from 'glob'
 import Path from 'path'
 
 const Package = JSON.parse(
@@ -9,15 +9,16 @@ const Package = JSON.parse(
 )
 
 const PATTERN = 'dist/*'
+const reExt = /(\..+)$/
 
-const paths = Glob.sync(PATTERN)
+const paths = globSync(PATTERN)
 paths.forEach((path) => {
 	const fileName = Path.basename(path)
 	if (Fs.statSync(path).isDirectory()) {
 		return
 	}
 
-	const ext = fileName.match(/(\..+)$/)[1]
+	const ext = fileName.match(reExt)[1]
 	const base = Path.basename(fileName, ext)
 	const versionedPath = Path.join(
 		Path.dirname(path),

@@ -34,9 +34,9 @@
 
 		const params = {
 			selectedItem: {
-				treePathIndices: [],
-				treePathValues: [],
-				leafValue: undefined
+				selectedPathIndices: [],
+				selectedPathValues: [],
+				selectedLeafValue: undefined
 			}
 		};
 
@@ -146,9 +146,9 @@
 		// Initial dynamic tree data (starts with a small set)
 		const dynamicParams = {
 			selectedItem: {
-				treePathIndices: [],
-				treePathValues: [],
-				leafValue: undefined,
+				selectedPathIndices: [],
+				selectedPathValues: [],
+				selectedLeafValue: undefined,
 				// The special `tree` property is read by the plugin's view
 				tree: [
 					{ label: 'Animals', children: [ { label: 'Dog', value: 'dog' }, { label: 'Cat', value: 'cat' } ] },
@@ -248,7 +248,7 @@
 		document.getElementById('insert-before').addEventListener('click', () => {
 			const label = /** @type {HTMLInputElement} */ (document.getElementById('dyn-label')).value || 'New'
 			const value = /** @type {HTMLInputElement} */ (document.getElementById('dyn-value')).value || undefined
-			const sel = dynamicParams.selectedItem.treePathIndices
+			const sel = dynamicParams.selectedItem.selectedPathIndices
 			const { parentArr, index } = traverseTree(getTreeRoot(), sel)
 			const node = value === undefined || value === '' ? { label, children: [] } : { label, value }
 			if (index >= 0) {
@@ -271,7 +271,7 @@
 		document.getElementById('insert-child').addEventListener('click', () => {
 			const label = /** @type {HTMLInputElement} */ (document.getElementById('dyn-label')).value || 'New'
 			const value = /** @type {HTMLInputElement} */ (document.getElementById('dyn-value')).value || undefined
-			const sel = dynamicParams.selectedItem.treePathIndices
+			const sel = dynamicParams.selectedItem.selectedPathIndices
 			const tree = getTreeRoot()
 			if (!sel || sel.length === 0) {
 				// append to root
@@ -289,15 +289,15 @@
 		})
 
 		document.getElementById('remove-selected').addEventListener('click', () => {
-			const sel = dynamicParams.selectedItem.treePathIndices
+			const sel = dynamicParams.selectedItem.selectedPathIndices
 			if (!sel || sel.length === 0) return
 			const { parentArr, index } = traverseTree(getTreeRoot(), sel)
 			if (index >= 0) {
 				parentArr.splice(index, 1)
 				// clear selection
-				dynamicParams.selectedItem.treePathIndices = []
-				dynamicParams.selectedItem.treePathValues = []
-				dynamicParams.selectedItem.leafValue = undefined
+				dynamicParams.selectedItem.selectedPathIndices = []
+				dynamicParams.selectedItem.selectedPathValues = []
+				dynamicParams.selectedItem.selectedLeafValue = undefined
 				emitTreeChange()
 			}
 		})
@@ -305,7 +305,7 @@
 		document.getElementById('update-selected').addEventListener('click', () => {
 			const label = /** @type {HTMLInputElement} */ (document.getElementById('dyn-label')).value || 'Updated'
 			const value = /** @type {HTMLInputElement} */ (document.getElementById('dyn-value')).value || undefined
-			const sel = dynamicParams.selectedItem.treePathIndices
+			const sel = dynamicParams.selectedItem.selectedPathIndices
 			if (!sel) return
 			const { parentArr, index } = traverseTree(getTreeRoot(), sel)
 			if (index >= 0 && parentArr[index]) {

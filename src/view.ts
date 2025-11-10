@@ -9,8 +9,13 @@ interface Config {
 	onSelectItem: (
 		pathIndices: number[],
 		pathValues: unknown[],
-		leafValue: unknown,
+		selectedLeafValue: unknown,
 	) => void
+	// onActiveItem: (
+	// 	pathIndices: number[],
+	// 	pathValues: unknown[],
+	// 	activeLeafValue: unknown,
+	// ) => void
 	maxHeight?: string
 }
 
@@ -31,8 +36,13 @@ export class PluginView implements View {
 	private onSelectItem_: (
 		pathIndices: number[],
 		pathValues: unknown[],
-		leafValue: unknown,
+		selectedLeafValue: unknown,
 	) => void
+	// private onActiveItem_: (
+	// 	pathIndices: number[],
+	// 	pathValues: unknown[],
+	// 	activeLeafValue: unknown,
+	// ) => void
 	private abortListeners: AbortController
 
 	constructor(doc: Document, config: Config) {
@@ -65,6 +75,7 @@ export class PluginView implements View {
 			this.children_ = config.children
 		}
 		this.onSelectItem_ = config.onSelectItem
+		// this.onActiveItem_ = config.onActiveItem
 
 		// Build the tree
 		this.buildTree_()
@@ -136,8 +147,11 @@ export class PluginView implements View {
 
 		items.forEach((item, index) => {
 			const newPathIndices = [...pathIndices, index]
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const newPathValues = [...pathValues, (item as any).value]
+			// Both TreeOption and TreeNode expose an optional `value` property
+			const newPathValues = [
+				...pathValues,
+				(item as TreeNode | TreeOption).value,
+			]
 
 			if (isTreeNode(item)) {
 				// Find first <details> in remaining with the node class and matching
@@ -179,23 +193,35 @@ export class PluginView implements View {
 				summary.setAttribute('data-tree-path', JSON.stringify(newPathIndices))
 				summary.textContent = item.label
 
-				// Selectable behavior when node has a value
+				// Always attach an active callback when the summary is clicked.
+				// If the node has a `value`, also treat the click as a selection
+				// (prevent default toggle and call onSelect). For nodes without a
+				// value allow the native toggle behavior to occur.
 				if ('value' in item && item.value !== undefined) {
 					summary.classList.add(className('selectable'))
-					summary.addEventListener(
-						'click',
-						(e) => {
-							const target = e.target as HTMLElement
-							if (target.tagName === 'SUMMARY') {
-								e.preventDefault()
-								this.onSelectItem_(newPathIndices, newPathValues, item.value)
-							}
-						},
-						{signal},
-					)
 				} else {
 					summary.classList.remove(className('selectable'))
 				}
+				summary.addEventListener(
+					'click',
+					(e) => {
+						const target = e.target as HTMLElement
+						if (target.tagName === 'SUMMARY') {
+							// Always notify about the active node
+							// this.onActiveItem_(
+							// 	newPathIndices,
+							// 	newPathValues,
+							// 	(item as TreeNode | TreeOption).value,
+							// )
+							if ('value' in item && item.value !== undefined) {
+								// Selection: prevent native toggle and emit select
+								e.preventDefault()
+								this.onSelectItem_(newPathIndices, newPathValues, item.value)
+							}
+						}
+					},
+					{signal},
+				)
 
 				// Ensure child container exists and is used as the next parent
 				let childContainer = details.querySelector(
@@ -251,6 +277,8 @@ export class PluginView implements View {
 				optionElem.addEventListener(
 					'click',
 					() => {
+						// Option click both makes the node active and selects it
+						// this.onActiveItem_(newPathIndices, newPathValues, item.value)
 						this.onSelectItem_(newPathIndices, newPathValues, item.value)
 					},
 					{signal},
@@ -287,111 +315,6 @@ export class PluginView implements View {
 		return optionElem
 	}
 
-	private renderTreeNode_(
-		container: HTMLElement,
-		node: TreeNode,
-		index: number,
-		pathIndices: number[],
-		pathValues: unknown[],
-		doc: Document,
-	): void {
-		const signal = this.abortListeners.signal
-
-		const details = doc.createElement('details')
-		details.classList.add(className('node'))
-
-		// Add a stable data attribute for the node (helpful for visual tests)
-		details.setAttribute('data-tree-node', String(index))
-
-		// Prepare path info early so we can attach data attributes
-		const newPathIndices = [...pathIndices, index]
-		const newPathValues = [...pathValues, node.value]
-
-		const summary = doc.createElement('summary')
-		summary.classList.add(className('summary'))
-
-		// Expose a stable data attribute for the summary label and path used by tests
-		summary.setAttribute('data-tree-summary', String(node.label))
-		summary.setAttribute('data-tree-path', JSON.stringify(newPathIndices))
-		summary.textContent = node.label
-
-		// If the node itself has a value, make it selectable
-		if ('value' in node && node.value !== undefined) {
-			summary.addEventListener(
-				'click',
-				(e) => {
-					// Only handle the label click, not the disclosure triangle
-					const target = e.target as HTMLElement
-					if (target.tagName === 'SUMMARY') {
-						e.preventDefault()
-						const newPathIndices = [...pathIndices, index]
-						const newPathValues = [...pathValues, node.value]
-						this.onSelectItem_(newPathIndices, newPathValues, node.value)
-					}
-				},
-				{signal},
-			)
-			summary.classList.add(className('selectable'))
-		}
-
-		details.appendChild(summary)
-
-		// Render children in a nested container
-		const childContainer = doc.createElement('div')
-		childContainer.classList.add(className('children'))
-
-		// Mark child container with path for easier querying
-		childContainer.setAttribute(
-			'data-tree-children-path',
-			JSON.stringify(newPathIndices),
-		)
-
-		this.renderTreeLevel_(
-			childContainer,
-			node.children,
-			newPathIndices,
-			newPathValues,
-			doc,
-		)
-
-		details.appendChild(childContainer)
-		container.appendChild(details)
-	}
-
-	private renderTreeOption_(
-		container: HTMLElement,
-		option: TreeOption,
-		index: number,
-		pathIndices: number[],
-		pathValues: unknown[],
-		doc: Document,
-	): void {
-		const signal = this.abortListeners.signal
-
-		const optionElem = doc.createElement('div')
-		optionElem.classList.add(className('option'))
-		optionElem.textContent = option.label
-
-		// Expose stable data attributes for tests
-		optionElem.setAttribute('data-tree-option', String(option.label))
-		optionElem.setAttribute(
-			'data-tree-path',
-			JSON.stringify([...pathIndices, index]),
-		)
-
-		optionElem.addEventListener(
-			'click',
-			() => {
-				const newPathIndices = [...pathIndices, index]
-				const newPathValues = [...pathValues, option.value]
-				this.onSelectItem_(newPathIndices, newPathValues, option.value)
-			},
-			{signal},
-		)
-
-		container.appendChild(optionElem)
-	}
-
 	private onValueChange_(): void {
 		// Update visual selection state based on the bound value.
 		// Clear previous selection markers
@@ -411,11 +334,11 @@ export class PluginView implements View {
 			this.children_ = raw.tree
 			this.buildTree_()
 		}
-		if (!raw || !Array.isArray(raw.treePathIndices)) {
+		if (!raw || !Array.isArray(raw.selectedPathIndices)) {
 			return
 		}
 
-		const pathStr = JSON.stringify(raw.treePathIndices)
+		const pathStr = JSON.stringify(raw.selectedPathIndices)
 		// Find the element with matching data-tree-path attribute and mark it
 		const selector = `[data-tree-path='${pathStr}']`
 		const el = this.element.querySelector(selector) as HTMLElement | null

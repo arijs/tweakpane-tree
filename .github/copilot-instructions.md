@@ -17,13 +17,13 @@ This repository implements a Tweakpane input plugin (tree control). The guidance
 ## Big-picture architecture notes
 
 - This is a small single-plugin package. The plugin is implemented using the `InputBindingPlugin` contract from `@arijs/tweakpane-core` (see `createPlugin(...)` in `src/plugin.ts`).
-- Data flow: external bound object (consumer) -> `binding.reader` (reads only `treePathIndices`) -> plugin holds internal `TreeValue` -> user interactions call controller -> controller sets `value.rawValue` -> `binding.writer` writes all three properties back to the consumer.
+- Data flow: external bound object (consumer) -> `binding.reader` (reads only `selectedPathIndices`) -> plugin holds internal `TreeValue` -> user interactions call controller -> controller sets `value.rawValue` -> `binding.writer` writes all three properties back to the consumer.
 - The CSS is compiled from `src/sass/plugin.scss` and inlined into the `css` export by the bundler at build time (see `vite.config.ts`). Do not search for a separate compiled CSS file — it's embedded into the bundle.
 - DOM diffing / dynamic trees: The view implementation now tries to reuse existing DOM nodes when rebuilding the tree (minimizes reflows and preserves element identity). See `docs/dynamic-trees.md` for details and examples when working on `view.ts`.
 
 ## Project-specific conventions
 
-- Value shape: the external value must have { treePathIndices, treePathValues, leafValue }. The plugin's `reader` intentionally reads only `treePathIndices` (see `binding.reader` in `src/plugin.ts`). Respect that when changing reading behavior.
+- Value shape: the external value must have { selectedPathIndices, selectedPathValues, selectedLeafValue }. The plugin's `reader` intentionally reads only `selectedPathIndices` (see `binding.reader` in `src/plugin.ts`). Respect that when changing reading behavior.
 - DOM semantics: the view uses native `<details>` / `<summary>` for nodes and plain `<div>` for options. Keep accessibility and native behavior in mind when editing `view.ts`.
 - Class naming: use the `ClassName('tree')` helper in `view.ts` (example: `className('container')`) — don't hardcode Tweakpane class names elsewhere.
 - Export shape: `src/index.ts` exports `id`, `css`, and `plugins = [TreeInputPlugin]`. Consumers import the plugin and call `pane.registerPlugin(...)` (see README example).

@@ -14,9 +14,9 @@ export function renderTreePane() {
 
 	const params = {
 		selectedItem: {
-			treePathIndices: [],
-			treePathValues: [],
-			leafValue: undefined,
+			selectedPathIndices: [],
+			selectedPathValues: [],
+			selectedLeafValue: undefined,
 		},
 	}
 

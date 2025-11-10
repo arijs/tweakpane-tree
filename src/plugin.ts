@@ -25,11 +25,20 @@ export interface TreeNode {
 // Children can be a mix of options and tree nodes
 export type TreeChildren = (TreeOption | TreeNode)[]
 
+export interface TreeActive {
+	// Active path mirrors the currently "active" node (any clicked node,
+	// including nodes without a value). These are updated on any click of a
+	// node/option and are written back to the bound object by the plugin.
+	activePathIndices: number[]
+	activePathValues: unknown[]
+	activeLeafValue: unknown
+}
+
 // The external value that will be bound
 export interface TreeValue {
-	treePathIndices: number[]
-	treePathValues: unknown[]
-	leafValue: unknown
+	selectedPathIndices: number[]
+	selectedPathValues: unknown[]
+	selectedLeafValue: unknown
 	// Optional dynamic tree definition. If provided, use this to render the tree
 	// instead of the static `children` from params.
 	tree?: TreeChildren | undefined
@@ -68,9 +77,9 @@ export const TreeInputPlugin: InputBindingPlugin<
 		if (
 			typeof exValue !== 'object' ||
 			exValue === null ||
-			!('treePathIndices' in exValue) ||
-			!('treePathValues' in exValue) ||
-			!('leafValue' in exValue)
+			!('selectedPathIndices' in exValue) ||
+			!('selectedPathValues' in exValue) ||
+			!('selectedLeafValue' in exValue)
 		) {
 			// Return null to deny the user input
 			return null
@@ -78,8 +87,8 @@ export const TreeInputPlugin: InputBindingPlugin<
 
 		const value = exValue as TreeValue
 		if (
-			!Array.isArray(value.treePathIndices) ||
-			!Array.isArray(value.treePathValues)
+			!Array.isArray(value.selectedPathIndices) ||
+			!Array.isArray(value.selectedPathValues)
 		) {
 			return null
 		}
@@ -130,32 +139,43 @@ export const TreeInputPlugin: InputBindingPlugin<
 		reader(_args) {
 			return (exValue: unknown): TreeValue => {
 				// Convert an external unknown value into the internal value
-				// Only read the treePathIndices property as per requirements
+				// Only read the selectedPathIndices property as per requirements
 				if (
 					typeof exValue === 'object' &&
 					exValue !== null &&
-					'treePathIndices' in exValue
+					'selectedPathIndices' in exValue
 				) {
 					const value = exValue as TreeValue
+					// Safely extract potentially-typed fields from the unknown external value
+					// const activeFromValue = (
+					// 	value as unknown as {activePathIndices?: number[]}
+					// ).activePathIndices
+					const treeFromValue = (value as unknown as {tree?: unknown}).tree as
+						| TreeChildren
+						| undefined
 					return {
-						treePathIndices: Array.isArray(value.treePathIndices)
-							? [...value.treePathIndices]
+						selectedPathIndices: Array.isArray(value.selectedPathIndices)
+							? [...value.selectedPathIndices]
 							: [],
-						treePathValues: [],
-						leafValue: undefined,
+						selectedPathValues: [],
+						selectedLeafValue: undefined,
+						// activePathIndices: Array.isArray(activeFromValue)
+						// 	? [...activeFromValue]
+						// 	: [],
+						// activePathValues: [],
+						// activeLeafValue: undefined,
 						// carry through a dynamic tree when present so the
 						// controller can render it
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						tree: Array.isArray((value as any).tree)
-							? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-								[...(value as any).tree]
-							: undefined,
+						tree: Array.isArray(treeFromValue) ? [...treeFromValue] : undefined,
 					}
 				}
 				return {
-					treePathIndices: [],
-					treePathValues: [],
-					leafValue: undefined,
+					selectedPathIndices: [],
+					selectedPathValues: [],
+					selectedLeafValue: undefined,
+					// activePathIndices: [],
+					// activePathValues: [],
+					// activeLeafValue: undefined,
 				}
 			}
 		},
@@ -170,9 +190,12 @@ export const TreeInputPlugin: InputBindingPlugin<
 				// Write all properties to the target. Include `tree` only when
 				// present on the internal value.
 				const out: Record<string, unknown> = {
-					treePathIndices: [...inValue.treePathIndices],
-					treePathValues: [...inValue.treePathValues],
-					leafValue: inValue.leafValue,
+					selectedPathIndices: [...inValue.selectedPathIndices],
+					selectedPathValues: [...inValue.selectedPathValues],
+					selectedLeafValue: inValue.selectedLeafValue,
+					// activePathIndices: [...inValue.activePathIndices],
+					// activePathValues: [...inValue.activePathValues],
+					// activeLeafValue: inValue.activeLeafValue,
 				}
 				if (inValue.tree !== undefined) {
 					out.tree = Array.isArray(inValue.tree)

@@ -29,9 +29,9 @@ This document summarizes the recent change that enables dynamic trees for the `t
 
 ```ts
 {
-	treePathIndices: [0, 1],
-	treePathValues: ['A','B'],
-	leafValue: 'leafB',
+	selectedPathIndices: [0, 1],
+	selectedPathValues: ['A','B'],
+	selectedLeafValue: 'leafB',
 	tree: [
 		{ label: 'Group A', children: [{ label: 'A.1', value: 1 }, { label: 'A.2', value: 2 }] },
 		{ label: 'Group B', value: 'leafB' }

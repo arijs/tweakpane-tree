@@ -39,9 +39,9 @@ pane.registerPlugin(TreePlugin);
 ```js
 const params = {
   selectedItem: {
-    treePathIndices: [],
-    treePathValues: [],
-    leafValue: undefined
+    selectedPathIndices: [],
+    selectedPathValues: [],
+    selectedLeafValue: undefined
   }
 };
 
@@ -68,9 +68,9 @@ pane.addBinding(params, 'selectedItem', {
 }).on('change', (ev) => {
   console.log(ev.value);
   // {
-  //   treePathIndices: [0, 1],
-  //   treePathValues: [null, '#00ff00'],
-  //   leafValue: '#00ff00'
+  //   selectedPathIndices: [0, 1],
+  //   selectedPathValues: [null, '#00ff00'],
+  //   selectedLeafValue: '#00ff00'
   // }
 });
 ```
@@ -106,16 +106,16 @@ When you bind a tree input, the external value has the following structure:
 
 ```typescript
 {
-  treePathIndices: number[];  // Array of indices representing the path from root to selected item
-  treePathValues: unknown[];  // Array of values at each level of the path
-  leafValue: unknown;         // The value of the selected leaf item
+  selectedPathIndices: number[];  // Array of indices representing the path from root to selected item
+  selectedPathValues: unknown[];  // Array of values at each level of the path
+  selectedLeafValue: unknown;     // The value of the selected leaf item
 }
 ```
 
 ### Reading and Writing
 
-- **Reading**: Only the `treePathIndices` property is read from the bound object
-- **Writing**: All three properties (`treePathIndices`, `treePathValues`, `leafValue`) are written to the bound object
+- **Reading**: Only the `selectedPathIndices` property is read from the bound object
+- **Writing**: All three properties (`selectedPathIndices`, `selectedPathValues`, `selectedLeafValue`) are written to the bound object
 
 ## Example
 
