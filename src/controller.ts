@@ -1,13 +1,14 @@
 import {Controller, Value, ViewProps} from '@arijs/tweakpane-core'
 
-import {TreeChildren, TreeValue} from './plugin.js'
+import {PluginInputParams, TreeChildren, TreeValue} from './plugin.js'
 import {PluginView} from './view.js'
 
 interface Config {
 	value: Value<TreeValue>
 	viewProps: ViewProps
 	children: TreeChildren
-	maxHeight?: string
+	maxHeight?: string | undefined
+	onClickItem: PluginInputParams['onClickItem']
 }
 
 // Custom controller class should implement `Controller` interface
@@ -40,6 +41,7 @@ export class PluginController implements Controller<PluginView> {
 			onSelectItem: this.onSelectItem_,
 			// onActiveItem: this.onActiveItem_,
 			maxHeight: config.maxHeight,
+			onClickItem: config.onClickItem,
 		})
 	}
 

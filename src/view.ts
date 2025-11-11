@@ -1,6 +1,13 @@
 import {ClassName, Value, View, ViewProps} from '@arijs/tweakpane-core'
 
-import {TreeChildren, TreeNode, TreeOption, TreeValue} from './plugin.js'
+import {
+	PluginInputOnClickItemParamsBase,
+	PluginInputParams,
+	TreeChildren,
+	TreeNode,
+	TreeOption,
+	TreeValue,
+} from './plugin.js'
 
 interface Config {
 	value: Value<TreeValue>
@@ -11,6 +18,7 @@ interface Config {
 		pathValues: unknown[],
 		selectedLeafValue: unknown,
 	) => void
+	onClickItem: PluginInputParams['onClickItem']
 	// onActiveItem: (
 	// 	pathIndices: number[],
 	// 	pathValues: unknown[],
@@ -28,6 +36,17 @@ function isTreeNode(item: TreeOption | TreeNode): item is TreeNode {
 	return 'children' in item && Array.isArray(item.children)
 }
 
+function itemHasValue(item: TreeOption | TreeNode): boolean {
+	return 'value' in item && item.value !== undefined
+}
+
+function isEventTargetHtmlSummaryElement(
+	ev: Event,
+): ev is Event & {target: HTMLElement} & {target: {tagName: 'SUMMARY'}} {
+	const target = ev.target as HTMLElement
+	return target?.tagName === 'SUMMARY'
+}
+
 // Custom view class should implement `View` interface
 export class PluginView implements View {
 	public readonly element: HTMLElement
@@ -38,6 +57,7 @@ export class PluginView implements View {
 		pathValues: unknown[],
 		selectedLeafValue: unknown,
 	) => void
+	private onClickItem_: PluginInputParams['onClickItem']
 	// private onActiveItem_: (
 	// 	pathIndices: number[],
 	// 	pathValues: unknown[],
@@ -76,6 +96,7 @@ export class PluginView implements View {
 		}
 		this.onSelectItem_ = config.onSelectItem
 		// this.onActiveItem_ = config.onActiveItem
+		this.onClickItem_ = config.onClickItem
 
 		// Build the tree
 		this.buildTree_()
@@ -138,7 +159,6 @@ export class PluginView implements View {
 		pathValues: unknown[],
 		doc: Document,
 	): void {
-		const signal = this.abortListeners.signal
 		// Remaining starts as all direct children; we'll remove items from it
 		const remaining: HTMLElement[] = Array.from(
 			container.children,
@@ -176,65 +196,14 @@ export class PluginView implements View {
 					details = this.buildDetailsElement_(doc)
 				}
 
-				// Ensure stable attributes and classes are set/reset
-				details.classList.add(className('node'))
-				details.setAttribute('data-tree-node', String(index))
-
-				let summary = details.querySelector(
-					':scope > summary',
-				) as HTMLElement | null
-				if (!summary) {
-					summary = doc.createElement('summary')
-					summary.classList.add(className('summary'))
-					details.insertBefore(summary, details.firstChild)
-				}
-				summary.classList.add(className('summary'))
-				summary.setAttribute('data-tree-summary', String(item.label))
-				summary.setAttribute('data-tree-path', JSON.stringify(newPathIndices))
-				summary.textContent = item.label
-
-				// Always attach an active callback when the summary is clicked.
-				// If the node has a `value`, also treat the click as a selection
-				// (prevent default toggle and call onSelect). For nodes without a
-				// value allow the native toggle behavior to occur.
-				if ('value' in item && item.value !== undefined) {
-					summary.classList.add(className('selectable'))
-				} else {
-					summary.classList.remove(className('selectable'))
-				}
-				summary.addEventListener(
-					'click',
-					(e) => {
-						const target = e.target as HTMLElement
-						if (target.tagName === 'SUMMARY') {
-							// Always notify about the active node
-							// this.onActiveItem_(
-							// 	newPathIndices,
-							// 	newPathValues,
-							// 	(item as TreeNode | TreeOption).value,
-							// )
-							if ('value' in item && item.value !== undefined) {
-								// Selection: prevent native toggle and emit select
-								e.preventDefault()
-								this.onSelectItem_(newPathIndices, newPathValues, item.value)
-							}
-						}
-					},
-					{signal},
-				)
-
-				// Ensure child container exists and is used as the next parent
-				let childContainer = details.querySelector(
-					':scope > div.' + className('children'),
-				) as HTMLElement | null
-				if (!childContainer) {
-					childContainer = doc.createElement('div')
-					childContainer.classList.add(className('children'))
-					details.appendChild(childContainer)
-				}
-				childContainer.setAttribute(
-					'data-tree-children-path',
-					JSON.stringify(newPathIndices),
+				// Configure node element: classes, attributes and listeners
+				const childContainer = this.setupNodeElement_(
+					details,
+					item,
+					newPathIndices,
+					newPathValues,
+					index,
+					doc,
 				)
 
 				// Insert/reorder into parent using the first remaining element as anchor
@@ -267,21 +236,12 @@ export class PluginView implements View {
 					optionElem = this.buildOptionElement_(doc, item.label)
 				}
 
-				optionElem.classList.add(className('option'))
-				optionElem.textContent = item.label
-				optionElem.setAttribute('data-tree-option', String(item.label))
-				optionElem.setAttribute(
-					'data-tree-path',
-					JSON.stringify(newPathIndices),
-				)
-				optionElem.addEventListener(
-					'click',
-					() => {
-						// Option click both makes the node active and selects it
-						// this.onActiveItem_(newPathIndices, newPathValues, item.value)
-						this.onSelectItem_(newPathIndices, newPathValues, item.value)
-					},
-					{signal},
+				// Configure option element: classes, attributes and listeners
+				this.setupOptionElement_(
+					optionElem,
+					item,
+					newPathIndices,
+					newPathValues,
 				)
 
 				const nextSibling = remaining[0] || null
@@ -313,6 +273,149 @@ export class PluginView implements View {
 		optionElem.classList.add(className('option'))
 		optionElem.textContent = label
 		return optionElem
+	}
+
+	private onClickItemDefault({
+		isTreeNode,
+		isEventTargetSummary,
+		hasValue,
+		preventDefault,
+		select,
+	}: PluginInputOnClickItemParamsBase): void {
+		if (isTreeNode) {
+			if (isEventTargetSummary) {
+				preventDefault()
+				if (hasValue) {
+					select()
+				}
+			}
+		} else {
+			select()
+		}
+	}
+
+	// Configure node element after it was found or created. This sets
+	// attributes, ensures summary and children container exist, and
+	// attaches listeners using the provided AbortSignal.
+	private setupNodeElement_(
+		details: HTMLElement,
+		item: TreeNode,
+		newPathIndices: number[],
+		newPathValues: unknown[],
+		index: number,
+		doc: Document,
+	): HTMLElement {
+		const {signal} = this.abortListeners
+		details.classList.add(className('node'))
+		details.setAttribute('data-tree-node', String(index))
+
+		// Initialize native <details> open state from the node's
+		// `initialOpen` property when provided. Use the HTMLDetailsElement
+		// interface so TypeScript knows about the `open` property.
+		if (typeof (item as TreeNode).initialOpen === 'boolean') {
+			;(details as HTMLDetailsElement).open = Boolean(
+				(item as TreeNode).initialOpen,
+			)
+		}
+
+		let summary = details.querySelector(
+			':scope > summary',
+		) as HTMLElement | null
+		if (!summary) {
+			summary = doc.createElement('summary')
+			summary.classList.add(className('summary'))
+			details.insertBefore(summary, details.firstChild)
+		}
+		summary.classList.add(className('summary'))
+		summary.setAttribute('data-tree-summary', String(item.label))
+		summary.setAttribute('data-tree-path', JSON.stringify(newPathIndices))
+		summary.textContent = item.label
+
+		if (itemHasValue(item)) {
+			summary.classList.add(className('selectable'))
+		} else {
+			summary.classList.remove(className('selectable'))
+		}
+
+		summary.addEventListener(
+			'click',
+			(ev) => {
+				const params: PluginInputOnClickItemParamsBase = {
+					ev,
+					item,
+					hasValue: itemHasValue(item),
+					isTreeNode: true,
+					isEventTargetSummary: isEventTargetHtmlSummaryElement(ev),
+					preventDefault: ev.preventDefault.bind(ev),
+					select: () => {
+						this.onSelectItem_(newPathIndices, newPathValues, item.value)
+					},
+				}
+				if (this.onClickItem_) {
+					this.onClickItem_({
+						...params,
+						handleDefault: () => this.onClickItemDefault(params),
+					})
+				} else {
+					this.onClickItemDefault(params)
+				}
+			},
+			{signal},
+		)
+
+		let childContainer = details.querySelector(
+			':scope > div.' + className('children'),
+		) as HTMLElement | null
+		if (!childContainer) {
+			childContainer = doc.createElement('div')
+			childContainer.classList.add(className('children'))
+			details.appendChild(childContainer)
+		}
+		childContainer.setAttribute(
+			'data-tree-children-path',
+			JSON.stringify(newPathIndices),
+		)
+		return childContainer
+	}
+
+	// Configure option element after it was found or created. Sets
+	// attributes and attaches click listener using provided signal.
+	private setupOptionElement_(
+		optionElem: HTMLElement,
+		item: TreeOption,
+		newPathIndices: number[],
+		newPathValues: unknown[],
+	): void {
+		const {signal} = this.abortListeners
+		optionElem.classList.add(className('option'))
+		optionElem.textContent = item.label
+		optionElem.setAttribute('data-tree-option', String(item.label))
+		optionElem.setAttribute('data-tree-path', JSON.stringify(newPathIndices))
+		optionElem.addEventListener(
+			'click',
+			(ev) => {
+				const params: PluginInputOnClickItemParamsBase = {
+					ev,
+					item,
+					hasValue: itemHasValue(item),
+					isTreeNode: false,
+					isEventTargetSummary: false,
+					preventDefault: ev.preventDefault.bind(ev),
+					select: () => {
+						this.onSelectItem_(newPathIndices, newPathValues, item.value)
+					},
+				}
+				if (this.onClickItem_) {
+					this.onClickItem_({
+						...params,
+						handleDefault: () => this.onClickItemDefault(params),
+					})
+				} else {
+					this.onClickItemDefault(params)
+				}
+			},
+			{signal},
+		)
 	}
 
 	private onValueChange_(): void {

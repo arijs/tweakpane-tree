@@ -22,7 +22,7 @@
     "dev": "vite",
     "test_rem": "eslint --ext .ts \"**/*.ts\" && eslint --ext .js \"**/*.js\"",
     "lint": "eslint",
-    "test-vitest": "vitest",
+    "vitest": "vitest",
     "test": "ts-node test/visual-test.ts",
     "assets": "run-s clean build assets:version assets:zip",
     "assets:version": "node scripts/assets-append-version.js",

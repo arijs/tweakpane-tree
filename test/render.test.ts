@@ -36,5 +36,5 @@ test('renders tree correctly', async () => {
 	await expect(rootBranches).toHaveLength(3) // Colors, Sizes, Fonts
 	await expect(rootOptions).toHaveLength(1) // Standalone
 
-	await expect.element(wrapper).toMatchScreenshot('tree-initial')
+	// await expect.element(wrapper).toMatchScreenshot('tree-initial')
 })

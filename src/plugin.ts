@@ -20,6 +20,7 @@ export interface TreeNode {
 	label: string
 	children: TreeChildren
 	value?: unknown
+	initialOpen?: boolean | undefined
 }
 
 // Children can be a mix of options and tree nodes
@@ -44,12 +45,28 @@ export interface TreeValue {
 	tree?: TreeChildren | undefined
 }
 
+export interface PluginInputOnClickItemParamsBase {
+	ev: Event
+	item: TreeNode | TreeOption
+	hasValue: boolean
+	isTreeNode: boolean
+	isEventTargetSummary: boolean
+	preventDefault: () => void
+	select: () => void
+}
+
+export interface PluginInputOnClickItemParams
+	extends PluginInputOnClickItemParamsBase {
+	handleDefault: () => void
+}
+
 export interface PluginInputParams extends BaseInputParams {
 	// `children` may be omitted when the bound `TreeValue` already supplies
 	// a dynamic `tree` property.
 	children?: TreeChildren
 	view: 'tree'
 	maxHeight?: string | undefined
+	onClickItem: ((params: PluginInputOnClickItemParams) => void) | undefined
 }
 
 // NOTE: JSDoc comments of `InputBindingPlugin` can be useful to know details about each property
@@ -114,6 +131,15 @@ export const TreeInputPlugin: InputBindingPlugin<
 				return params.children as TreeChildren
 			}),
 			maxHeight: p.optional.string,
+			onClickItem: p.optional.custom((v) => {
+				if (v instanceof Function) {
+					return v as (params: {
+						item: TreeNode | TreeOption
+						preventDefault: () => void
+						select: () => void
+					}) => void
+				}
+			}),
 		}))
 		if (!result) {
 			return null
@@ -221,6 +247,7 @@ export const TreeInputPlugin: InputBindingPlugin<
 			viewProps: args.viewProps,
 			children: children as TreeChildren,
 			maxHeight: args.params.maxHeight,
+			onClickItem: args.params.onClickItem,
 		})
 	},
 })
